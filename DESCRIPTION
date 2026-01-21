@@ -1,0 +1,13 @@
+Package: MUST
+Title: More Urban Spatial Tools
+Version: 0.2.0
+Authors@R: 
+    c(person("Joeri", "Morpurgo", role = c("aut", "cre"),
+                     email = "j.morpurgo@cml.leidenuniv.nl",
+                     comment = c(ORCID = "0000-0001-7286-1991")))
+Description: More Urban Spatial Tools (MUST) is a package that intends to couple several frequently used GIS data sources and also provide surface level time-series analysis. The general aim of the package is to API request and combine remote sensing satellite data from Google Earth Engine and land-use land-cover (LULC) data from Ohsome (Historical repository of Open Street Maps (OSM)). The package provide a simple interface to request data for a city over a span of time. The initial aim for this code was to support the temporal analysis of green spaces in urban areas. To facilitate this, we have started with the functionality of retrieving - currently only annual - municipal border, estimate built borders, retrieving LULC data, retrieving vegetation indicators (NDVI & EVI). Added functionality is  retrieving LST from Landsat 8. Remote sensing data can currently only be requested as a year composite image of median or max value. 
+Maintainer: Joeri Morpurgo <j.morpurgo@cml.leidenuniv.nl>
+License: use_gpl3_license()
+Encoding: UTF-8
+Roxygen: list(markdown = TRUE)
+RoxygenNote: 7.3.3.9000
