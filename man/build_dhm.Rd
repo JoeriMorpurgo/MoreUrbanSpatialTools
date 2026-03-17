@@ -4,12 +4,12 @@
 \alias{build_dhm}
 \title{build_dhm; build digital height model}
 \usage{
-build_dhm(versie, blad)
+build_dhm(dtm, dsm)
 }
 \arguments{
-\item{versie}{AHN3,AHN4 or AHN5.}
+\item{dtm}{raster. Digital terrain model}
 
-\item{blad}{A code that relates to a block using the coding form AHN.}
+\item{dsm}{raster. Digital surface model}
 }
 \description{
 This function takes raster digital terrain models and digital surface models to calculate the digital height model. This can be understood as the height from the ground to a surface above it. NA values from the digital terrain model will be bilinearly interpolated based on a 3x3 grid. NOTE: this function currently only works with AHN data.

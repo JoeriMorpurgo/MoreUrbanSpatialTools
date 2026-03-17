@@ -5,7 +5,7 @@
 #' NOTE: 
 #' Literature: 
 #' @param rast raster object. Raster that you'd like to mask out if they verlap with buildings at some point in time
-#' @param timestap date/time. For when to retrieve the building data.
+#' @param date date/time. For when to retrieve the building data.
 #' @keywords classification, height, proportion
 #' @export
 #' @examples
@@ -13,7 +13,7 @@
 #' 
 
 
-mask_buildings_ohsome_robust <- function(rast, timestamp = "2017-01-01T00:00:00Z") { 
+mask_buildings_ohsome_robust <- function(rast, date = "2017-01-01T00:00:00Z") { 
   cat("Getting AOI from raster extent...\n")
     
   e <- ext(rast)
@@ -32,12 +32,12 @@ mask_buildings_ohsome_robust <- function(rast, timestamp = "2017-01-01T00:00:00Z
   bbox <- st_geometry(bbox)
   bbox <- st_make_valid(bbox)
   
-  cat("Creating ohsome query for buildings at", timestamp, "...\n")
+  cat("Creating ohsome query for buildings at", date, "...\n")
   
   # define API query
   buildings_sf <- ohsome_elements_geometry(
     boundary = bbox,
-    time = timestamp,
+    time = date,
     filter = "building=*"
   )
   
@@ -53,7 +53,7 @@ mask_buildings_ohsome_robust <- function(rast, timestamp = "2017-01-01T00:00:00Z
     cat("Retrieved requested data")
     
   if (is.null(buildings_sf_poly) || nrow(buildings_sf_poly) == 0) {
-    cat("No building data found at this timestamp.\n")
+    cat("No building data found at this date.\n")
     return(rast)
   }
   

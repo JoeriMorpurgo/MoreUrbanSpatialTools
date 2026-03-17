@@ -14,15 +14,15 @@
 #' PLACEHOLDER()
 #' 
 
-get_lulc_ohsome <- function(aoi, keyval_df, year, filename = NULL) {
-  
-  # Validate input
-  if (!is.data.frame(keyval_df) && !is.matrix(keyval_df)) {
-    stop("keyval_df must be a data.frame or matrix with two columns: key, value")
-  }
-  if (ncol(keyval_df) < 2) {
-    stop("keyval_df must have two columns: key, value")
-  }
+get_lulc_ohsome <- function(aoi, date) {
+
+#time
+year <- format(as.Date(date),"%Y")  
+
+#Check if we already have this data downloaded
+pre_download_check_result <- pre_download_check(city_name = aoi,
+                                                object = paste0("lulc",year))
+if(is.null(pre_download_check_result)){ #No LULC object found
   
   
   # Extract bbox depending on class
@@ -32,12 +32,12 @@ get_lulc_ohsome <- function(aoi, keyval_df, year, filename = NULL) {
   } else if (inherits(aoi, "Raster")) {
     bbox_vals <- raster::extent(aoi)
     
-  } else if (inherits(aoi, "sf")) {
+  } else if (inherits(aoi, "sf") || inherits(aoi, "sfc")) {
     bbox_vals <- sf::st_bbox(aoi)
     
   } else if(is.character(aoi)){
     cat("Using, ", aoi, " to query bbox from OSM")
-    bbox_vals <- get_municipal_border(aoi, historic = F, interactive = F)
+    bbox_vals <- get_municipal_border(aoi, historic = F)
   } else {
     stop("Unsupported spatial object. Use terra, raster, sf, or character value.")
   }
@@ -46,20 +46,20 @@ get_lulc_ohsome <- function(aoi, keyval_df, year, filename = NULL) {
   name <- aoi
   
   # Build filter string from key/value pairs
-  keyval_df <- as.data.frame(keyval_df, stringsAsFactors = FALSE)
-  filter_parts <- paste0(keyval_df[[1]], "=", keyval_df[[2]])
+  keyval_df <- as.data.frame(lulc_info, stringsAsFactors = FALSE)
+  filter_parts <- paste0(keyval_df[[1]], "=", keyval_df[[2]]) #Mostly full dataset from OSM/OHSOME
   filter_str <- paste(filter_parts, collapse = " or ")
   
   # Convert year to ohsome time format
-  time_str <- sprintf("%s-01-01", year)
+  time_str <- sprintf(date)
   
   # define API query
   query_lulc_sf <- ohsome_elements_geometry(
     boundary = bbox_vals,
     time = time_str,
     filter = filter_str,
-    properties = "tags",
-    clipGeometry = TRUE
+    properties = c("metadata","tags"),
+    clipGeometry = FALSE
   )
   
   cat("Sending query to Ohsome")
@@ -88,13 +88,24 @@ get_lulc_ohsome <- function(aoi, keyval_df, year, filename = NULL) {
   lulc_vect_masked <- vect(lulc_sf_masked) #to use writeVector, which seems much quicker than st_write?
   #OKay about 100x faster atleast.
   
-  if(is.character(filename)){
-    cat("writing gpkg") #let user know that the LULC is being saved.
-    writeVector(lulc_vect_masked, paste0(filename,".gpkg"),
-                overwrite = T, insert = F, filetype = "GPKG")
-    }
+  #coalesce LULC
+  lulc_vect_masked$lulc <- dplyr::coalesce(lulc_vect_masked$landuse,
+                                           lulc_vect_masked$leisure,
+                                           lulc_vect_masked$natural,
+                                           lulc_vect_masked$water,
+                                           lulc_vect_masked$amenity)
+  #remove double columns
+  lulc_vect_masked <- lulc_vect_masked["lulc"]
+  
+  writeVector(lulc_vect_masked, 
+              file = paste0("MUST_downloaded_data/",city_name,"/lulc",year,".gpkg"))
   
   
   #hand back the sf
   return(lulc_vect_masked)
+    }
+  else
+  {
+    return(pre_download_check_result)
+  }
 }

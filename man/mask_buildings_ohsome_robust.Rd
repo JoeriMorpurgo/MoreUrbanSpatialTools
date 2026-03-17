@@ -4,12 +4,12 @@
 \alias{mask_buildings_ohsome_robust}
 \title{Retrieves historical building polygons from ohsome to mask}
 \usage{
-mask_buildings_ohsome_robust(rast, timestamp = "2017-01-01T00:00:00Z")
+mask_buildings_ohsome_robust(rast, date = "2017-01-01T00:00:00Z")
 }
 \arguments{
 \item{rast}{raster object. Raster that you'd like to mask out if they verlap with buildings at some point in time}
 
-\item{timestap}{date/time. For when to retrieve the building data.}
+\item{date}{date/time. For when to retrieve the building data.}
 }
 \description{
 This function takes the extent from a raster and the set time to request building data from ohsome.

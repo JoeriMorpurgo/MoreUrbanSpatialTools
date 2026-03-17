@@ -20,15 +20,21 @@
 #' 
 
 ####################### get_urban_aoi #####################
-get_urban_aoi <- function(city_name,
-                          historic = F,
-                          date = NULL,
-                          interactive = F,
-                          dbscan = F, 
-                          eps = 1000, #1000m
-                          minPts = 100, #Approx 50% should be built up.
-                          plot = F){
+get_urban_border <- function(city_name,
+                              historic = F,
+                              date = NULL,
+                              interactive = F,
+                              dbscan = F, 
+                              eps = 1000, #1000m
+                              minPts = 100, #Approx 50% should be built up.
+                              plot = F){
+
+#Check if we already have this data downloaded
+pre_download_check_result <- pre_download_check(city_name = city_name,
+                                                object = "urban_border")
+if(is.null(pre_download_check_result)){ #if there is no file already, run the code.
   
+    
   #Find the municipal border to define the AOI
   cat("Getting urban border")
   
@@ -144,6 +150,15 @@ get_urban_aoi <- function(city_name,
   
   if(plot){print(mapview(AOI))}
   
-  return(AOI) #Return the shapefile
+  #save the urban_border
+  saveRDS(AOI,
+          file = paste0("MUST_downloaded_data/",city_name,"/urban_border"))
   
+  return(AOI) #Return the shapefile
+}
+  else
+  {
+    return(pre_download_check_result)
+  }
+
 }

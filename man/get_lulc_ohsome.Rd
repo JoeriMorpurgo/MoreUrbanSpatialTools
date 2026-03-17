@@ -4,7 +4,7 @@
 \alias{get_lulc_ohsome}
 \title{Retrieves historic LULC data from Ohsome}
 \usage{
-get_lulc_ohsome(aoi, keyval_df, year, filename = NULL)
+get_lulc_ohsome(aoi, date)
 }
 \arguments{
 \item{aoi}{SpatRaster, raster, sf or character value. Is the area of interest}

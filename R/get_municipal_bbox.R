@@ -14,8 +14,14 @@
 get_municipal_bbox <- function(city_name,
                                EE = F){ #If it needs to be for EE, 
   
+#Check if we already have this data downloaded
+pre_download_check_result <- pre_download_check(city_name = city_name,
+                   object = "municipal_bbox")
+if(is.null(pre_download_check_result)){ #if there is no file already, run the code.
+  
   #Urban defined by OSM
   urban_bbox_matrix <-  getbb(city_name, format_out = "matrix")
+  
   # Extract corners from bbox matrix
   xmin <- urban_bbox_matrix[1, 1]
   xmax <- urban_bbox_matrix[1, 2]
@@ -43,6 +49,12 @@ get_municipal_bbox <- function(city_name,
     urban_bbox <- st_geometry(urban_bbox)
     urban_bbox <- sf_as_ee(urban_bbox)
   }
+  saveRDS(urban_bbox,
+              file = paste0("MUST_downloaded_data/",city_name,"/municipal_bbox"))
   
   return(urban_bbox) #To be used in ee_as_raster
+  
+}
+else
+{return(pre_download_check_result)}
 }
