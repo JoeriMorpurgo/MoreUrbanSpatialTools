@@ -38,7 +38,7 @@ if(is.null(pre_download_check_result)){
     mask_band <- "SCL"
     mask_values <- c(1,3,8,9,10,11)
     cloud_property <- "eo:cloud_cover"
-    #To account for shift, i.e. in GEE harmonized dataset
+    # To account for shift, i.e. in GEE harmonized dataset
     dn_offset <- 1000
     shift_date <- "2022-01-25"
     }
@@ -67,7 +67,7 @@ if(is.null(pre_download_check_result)){
   
   if(is.null(active_process_collection())){
                                           p = processes()} #functions to be used
-  
+  if(!exists("p")){p = processes()}
   print("Logged in and connected")
   
   # 1.5 Get the bbox
@@ -97,61 +97,9 @@ if(is.null(pre_download_check_result)){
       p$array_contains(data = mask_values, value = x)
     }
   )
-  
-  # Apply the boolean mask to the original data
-  data = p$mask(data = data, mask = boolean_mask)
-  
+  data = p$mask(data = data, mask = boolean_mask) # Apply the boolean mask to the original data
+  data = p$filter_bands(data, bands = bandsIndicator) # Remove the mask band before index calculation to keep the cube clean
   print("Masked images")
-  
-  # Remove the mask band before index calculation to keep the cube clean
-  data = p$filter_bands(data, bands = bandsIndicator)
-  
-  # 2.6 Harmonization of Sentinel data
-  if(satellite == "sentinel2") {
-    print("Harmonizing: Moving pre-2022 images to Baseline 04.00 (adding 1000 DN)")
-    
-        if (as.Date(enddate) < as.Date(shift_date)) {
-        # Data req is pre-shit
-          data = p$apply(
-            data = data,
-            process = function(x, context) {
-              p$add(x, 1000)
-            }
-          )
-        }
-    
-    
-        if (as.Date(startdate) >= as.Date(shift_date)) {
-        # Data req is post-shift. Data is OK
-        }
-    
-        if (as.Date(startdate) < as.Date(shift_date) && as.Date(enddate) >= as.Date(shift_date)) {
-        # Data req covers the shift.
-          data_pre = p$filter_temporal(
-            data,
-            extent = c(startdate, as.character(shift_date - 1))
-          )
-          
-          data_post = p$filter_temporal(
-            data,
-            extent = c(as.character(shift_date), enddate)
-          )
-          
-          data_pre = p$apply(
-            data = data_pre,
-            process = function(x, context) {
-              p$add(x, 1000)
-            }
-          )
-          
-          data = p$merge_cubes(
-            cube1 = data_pre,
-            cube2 = data_post
-          )
-        }
-    
-    }
-  
   
   # 3. Calculate the indicator
   if(indicator == "NDVI") {
@@ -198,14 +146,9 @@ if(is.null(pre_download_check_result)){
   
   cat("Data saved now pulling in R environment")
   resultingRast <- terra::rast(paste0("MUST_downloaded_data/",city_name,"/",startdate,"_",enddate,"_",satellite,"_",indicator,"_",method,".tif"))
-  
-  #Change it to RDS
-  saveRDS(resultingRast,
-           file = paste0("MUST_downloaded_data/",city_name,"/",startdate,"_",enddate,"_",satellite,"_",indicator,"_",method))
-  resultingRast <- readRDS(paste0("MUST_downloaded_data/",city_name,"/",startdate,"_",enddate,"_",satellite,"_",indicator,"_",method))
-  
-  #removing .tif file for this package.
-  file.remove(paste0("MUST_downloaded_data/",city_name,"/",startdate,"_",enddate,"_",satellite,"_",indicator,"_",method,".tif"))
+  resultingRast <- clamp(resultingRast, lower = -1, upper = 1, values = F)
+  terra::writeRaster(resultingRast, filename = paste0("MUST_downloaded_data/",city_name,"/",startdate,"_",enddate,"_",satellite,"_",indicator,"_",method,".tif"),
+              overwrite = T)
   
   #return object
   return(resultingRast)
