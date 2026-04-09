@@ -54,8 +54,10 @@ if(is.null(pre_download_check_result)){
   
   #set bands for indicator
   if(indicator == "NDVI"){bandsIndicator <- c("B08", "B04")} #NIR then red
-  if(indicator == "EVI"){bandsIndicator <- c("B02", "B04", "B08")} #check formula
+  if(indicator == "EVI"){bandsIndicator <- c("B02", "B04", "B08")} #
+  if(indicator == "MSAVI"){bandsIndicator <- c("B08", "B04")} # doi.org/10.1016/0034-4257(94)90134-1
   if(indicator == "LST"){bandsIndicator <- c("ST_B10")}
+  if(indicator == "NDWI"){bandsIndicator <- c("B8A", "B11")} # doi.org/10.1016/j.ecolind.2025.113757
   
   
   # 1. Conditional connection to Copernicus Data Space Ecosystem (CDSE)
@@ -113,6 +115,59 @@ if(is.null(pre_download_check_result)){
     )
   }
   
+  if(indicator == "EVI") {
+    data = p$reduce_dimension(
+      data = data,
+      dimension = "bands",
+      reducer = function(bands, context) {
+        blue <- bands[1]/10000
+        red <- bands[2]/10000
+        nir <- bands[3]/10000
+        
+        #evi formula
+        (2.5*(nir-red))/(nir+6*red-7.5*blue+1)
+      }
+    )
+  }
+  
+  if(indicator == "MSAVI") {
+    data = p$reduce_dimension(
+      data = data,
+      dimension = "bands",
+      reducer = function(bands, context) {
+        nir <- bands[1]
+        red <- bands[2]
+        
+        #function
+        (2 * nir + 1 - ((2 * nir + 1)^2 - 8 * (nir - red))^0.5) / 2
+      }
+    )
+  }
+  
+  if(indicator == "LST") {
+    data = p$reduce_dimension(
+      data = data,
+      dimension = "bands",
+      reducer = function(bands, context) {
+        st_band <- bands[1]
+        
+        #apply scaling to get kelvina nd then celsius
+        (st_band * 0.00341802) + 149 - 273.15
+      }
+    )
+  }
+  
+  if(indicator == "NDWI") {
+    data = p$reduce_dimension(
+      data = data,
+      dimension = "bands",
+      reducer = function(bands, context) {
+        
+        p$normalized_difference(bands[1], bands[2])
+      }
+    )
+  }
+  
   # 4. Calculate the method
   if (method == "max") {
     data = p$reduce_dimension(
@@ -146,7 +201,10 @@ if(is.null(pre_download_check_result)){
   
   cat("Data saved now pulling in R environment")
   resultingRast <- terra::rast(paste0("MUST_downloaded_data/",city_name,"/",startdate,"_",enddate,"_",satellite,"_",indicator,"_",method,".tif"))
-  resultingRast <- clamp(resultingRast, lower = -1, upper = 1, values = F)
+  
+  #indicator specific clamping
+  if(indicator %in% c("NDVI", "NDWI","MSAVI", "EVI")){resultingRast <- clamp(resultingRast, lower = -1, upper = 1, values = F)} #values above 1 are urnealistic
+
   terra::writeRaster(resultingRast, filename = paste0("MUST_downloaded_data/",city_name,"/",startdate,"_",enddate,"_",satellite,"_",indicator,"_",method,".tif"),
               overwrite = T)
   

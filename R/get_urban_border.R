@@ -130,14 +130,6 @@ if(is.null(pre_download_check_result)){ #if there is no file already, run the co
       mutate(nProp = n/max(n)*100) %>%
       filter(nProp > 10) #If cluster is smaller than 10% omit it?....
     
-    #plot(points["cluster"])
-    # points <- points %>%
-    #   filter(cluster == 1) #biggest cluster
-    
-    #Concave hull
-    # concave_aoi <- concaveman::concaveman(points, concavity = 2)
-    # concave_aoi <- st_transform(concave_aoi, 4326)
-    # AOI <- concave_aoi
     
     #Make AOI concave
     concave_aoi <- st_concave_hull(points$geometry, ratio = 0.35)

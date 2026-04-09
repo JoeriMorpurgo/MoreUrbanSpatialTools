@@ -84,7 +84,8 @@ if(is.null(pre_download_check_result)){ #No LULC object found
   lulc_sf_masked <- st_intersection(lulc_sf_poly, aoi)
   
   #omitting columns that are "extra"
-  lulc_sf_masked <- lulc_sf_masked[unique(keyval_df[[1]])] #reduce to what has been requested in the start
+  subsetNames <- unique(lulc_info[[1]])[unique(lulc_info[[1]]) %in% colnames(lulc_sf_masked)]
+  lulc_sf_masked <- lulc_sf_masked[subsetNames] #reduce to what has been requested in the start
   lulc_vect_masked <- vect(lulc_sf_masked) #to use writeVector, which seems much quicker than st_write?
   #OKay about 100x faster atleast.
   

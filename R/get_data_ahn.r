@@ -14,6 +14,8 @@
 #Function to download
 get_data_ahn <- function(date, city_name) {
 
+  options(timeout = max(900, getOption("timeout")))
+  
 #year to version
 year <- str_extract(date, "\\d{4}")
 if(year %in% c(2024:2026)){version <- "AHN5"}
@@ -127,7 +129,7 @@ if(is.null(pre_download_check_result)){ #if there is no file already, run the co
   dhm_tot <- vrt(list.files(paste0("MUST_downloaded_data/",city_name,"/AHN/"), pattern = ".tif", full.names = T))
   
   #save the stack for later.
-  writeRaster(dhm_tot, file = paste0("MUST_downloaded_data/",city_name,"/",version,"_dhm.tif"))
+  terra::writeRaster(dhm_tot, file = paste0("MUST_downloaded_data/",city_name,"/",version,"_dhm.tif"))
   
   #remove all files that were used to get the dhm
   unlink(list.dirs(paste0("MUST_downloaded_data/",city_name,"/AHN/"), recursive = F),
