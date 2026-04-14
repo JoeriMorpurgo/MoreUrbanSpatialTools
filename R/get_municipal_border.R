@@ -1,4 +1,4 @@
-#' Retrieve current or histroric municipal border
+#' Retrieve current or histroric municipal border limited to annual temporal resolution
 #'
 #' This function is retrieves the municipal border for either current time (Open Street Maps) or historic (Ohsome).
 #' NOTE: 
@@ -14,13 +14,15 @@
 
 ############################ get_municipal_border #################
 get_municipal_border <- function(city_name,
-                                 interactive = F,
                                  historic = FALSE,
                                  date = NULL) {
-  
+
+#date to year  transformation
+dateYear <- year(as.POSIXct(startdate))
+    
 #Check if we already have this data downloaded
 pre_download_check_result <- pre_download_check(city_name = city_name,
-                                                object = "municipal_border")
+                                                object = paste0("municipal_border_",dateYear))
 if(is.null(pre_download_check_result)){ #if there is no file already, run the code.  
   
   
@@ -124,7 +126,7 @@ if(is.null(pre_download_check_result)){ #if there is no file already, run the co
   
   #save the result
   saveRDS(admin_border,
-              file = paste0("MUST_downloaded_data/",city_name,"/municipal_border"))
+              file = paste0("MUST_downloaded_data/",city_name,"/municipal_border_",dateYear))
   
   message("Requested border has been returned and saved")
   Sys.sleep(1)

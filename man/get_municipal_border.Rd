@@ -2,9 +2,9 @@
 % Please edit documentation in R/get_municipal_border.R
 \name{get_municipal_border}
 \alias{get_municipal_border}
-\title{Retrieve current or histroric municipal border}
+\title{Retrieve current or histroric municipal border limited to annual temporal resolution}
 \usage{
-get_municipal_border(city_name, interactive = F, historic = FALSE, date = NULL)
+get_municipal_border(city_name, historic = FALSE, date = NULL)
 }
 \arguments{
 \item{city_name}{character value. name of a city to retrieve the bbox for.}

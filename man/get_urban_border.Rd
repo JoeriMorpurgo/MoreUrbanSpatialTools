@@ -9,7 +9,7 @@ get_urban_border(
   historic = F,
   date = NULL,
   interactive = F,
-  dbscan = F,
+  dbscan = T,
   eps = 1000,
   minPts = 100,
   plot = F

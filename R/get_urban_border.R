@@ -24,72 +24,78 @@ get_urban_border <- function(city_name,
                               historic = F,
                               date = NULL,
                               interactive = F,
-                              dbscan = F, 
+                              dbscan = T, 
                               eps = 1000, #1000m
                               minPts = 100, #Approx 50% should be built up.
                               plot = F){
 
+#date to year  transformation
+dateYear <- year(as.POSIXct(date))  
+  
 #Check if we already have this data downloaded
 pre_download_check_result <- pre_download_check(city_name = city_name,
-                                                object = "urban_border")
+                                                object = paste0("urban_border_",dateYear))
 if(is.null(pre_download_check_result)){ #if there is no file already, run the code.
   
     
-  #Find the municipal border to define the AOI
+  ##Find the municipal border to define the AOI
   cat("Getting urban border")
-  
-  municipal_aoi <- get_municipal_border(city_name,
-                                        interactive)
+  municipal_aoi <- get_municipal_border(city_name)
   municipal_aoi <- st_make_valid(municipal_aoi)
   Sys.sleep(1)
   
-  #Retrieve the LULC
-  if(historic){
-    message("Creating Ohsome boundary")
-    municipal_aoi_wip <- st_simplify(municipal_aoi, dTolerance = 0.1, preserveTopology = TRUE)
-    municipal_aoi_wip <- st_make_valid(municipal_aoi_wip)
-    aoi <- ohsome_boundary(municipal_aoi_wip)
-    message("Requesting historic Ohsome data")
-    query <- ohsome_elements_geometry(
-      boundary = aoi,  
-      filter = paste(
-        "landuse=residential or",
-        "landuse=commercial or",
-        "landuse=construction or",
-        "landuse=industrial or",
-        "landuse=retail"
-      ),
-      time = date,
-      properties = "tags",
-      clipGeometry = TRUE)
-    AOI <- ohsome_post(query) #Send request
-    AOI <- AOI[st_geometry_type(AOI) %in% c("POLYGON", "MULTIPOLYGON"), ]
-    AOI <- st_cast(AOI, "MULTIPOLYGON")
-    AOI <- st_make_valid(AOI)
-    message("Retrieved historic Ohsome data for ", city_name)
-    
-  }
-  else
-  {
-    #Transform it to a poly bbox for OSM opq
-    cat("Prepping polygon bbox for overpass API query")
-    municipal_aoi_poly_bbox <- as.matrix(unclass(st_geometry(municipal_aoi))[[1]])
-    
-    #Request OSM data
-    message("Requesting OSM LULC data")
-    AOI <- opq(bbox = municipal_aoi_poly_bbox) %>%
-      add_osm_features(features = c(
-        "\"landuse\"~\"residential|commercial|construction|industrial|retail\""
-      )) %>%
-      osmdata_sf()
-    message("Retrieved the OSM LULC data for ", city_name)
-    
-    #Prep the AOI
-    AOI <- merge_osm_polygons(AOI) #Merge multipoly and poly together
-    AOI <- st_make_valid(AOI)
-    
-  }
+  ##Retrieve the LULC
+      if(historic){
+        
+        message("Creating Ohsome boundary")
+        municipal_aoi_wip <- st_simplify(municipal_aoi, dTolerance = 0.1, preserveTopology = TRUE)
+        municipal_aoi_wip <- st_make_valid(municipal_aoi_wip)
+        aoi <- ohsome_boundary(municipal_aoi_wip)
+        
+        message("Requesting historic Ohsome data")
+        query <- ohsome_elements_geometry(
+          boundary = aoi,  
+          filter = paste(
+            "landuse=residential or",
+            "landuse=commercial or",
+            "landuse=construction or",
+            "landuse=industrial or",
+            "landuse=retail"
+          ),
+          time = date,
+          properties = "tags",
+          clipGeometry = TRUE)
+        AOI <- ohsome_post(query) #Send request
+        
+        #fix receieved qeury
+        AOI <- AOI[st_geometry_type(AOI) %in% c("POLYGON", "MULTIPOLYGON"), ]
+        AOI <- st_cast(AOI, "MULTIPOLYGON")
+        AOI <- st_make_valid(AOI)
+        message("Retrieved historic Ohsome data for ", city_name)
+        
+      }
+      else
+      {
+        #Transform it to a poly bbox for OSM opq
+        cat("Prepping polygon bbox for overpass API query")
+        municipal_aoi_poly_bbox <- as.matrix(unclass(st_geometry(municipal_aoi))[[1]])
+        
+        #Request OSM data
+        message("Requesting OSM LULC data")
+        AOI <- opq(bbox = municipal_aoi_poly_bbox) %>%
+          add_osm_features(features = c(
+            "\"landuse\"~\"residential|commercial|construction|industrial|retail\""
+          )) %>%
+          osmdata_sf()
+        message("Retrieved the OSM LULC data for ", city_name)
+        
+        #Prep the AOI
+        AOI <- merge_osm_polygons(AOI) #Merge multipoly and poly together
+        AOI <- st_make_valid(AOI)
+        
+      }
   
+  ##Define urban border
   #Hardcore omit bad geometry.... Shouldn've been fixed already.
   AOI <- AOI[which(st_is_valid(AOI)),]
   municipal_aoi <- municipal_aoi[which(st_is_valid(municipal_aoi)),]
@@ -102,7 +108,7 @@ if(is.null(pre_download_check_result)){ #if there is no file already, run the co
   #If using DBscan 
   if(dbscan){
     set.seed(0)
-    message("Starting DBscan")
+    message("Using DBscan to define urban border")
     AOI <- AOI[!st_is_empty(AOI),]
     
     #Estimate cell size for raster via area of shapefile
@@ -123,28 +129,43 @@ if(is.null(pre_download_check_result)){ #if there is no file already, run the co
     message("Assigning clusters based on density")
     clusters <- dbscan::dbscan(coords, eps = eps, #1500meters to consider
                                minPts = minPts) #707 is fully built area, given 1pts/ha
-    points$cluster <- clusters$cluster
+    points$clusterdb <- clusters$cluster
+
+    
+    #filter to right clusters
     points <- points %>%
-      group_by(cluster) %>%
+      group_by(clusterdb) %>%
       count() %>%
-      mutate(nProp = n/max(n)*100) %>%
-      filter(nProp > 10) #If cluster is smaller than 10% omit it?....
+      filter(clusterdb != 0) #omit non-clusters 
     
+    # %>%
+    #   mutate(nProp = n/max(n)*100) %>%
+    #   filter(nProp > 10) #If cluster is smaller than 10% omit it?....
     
-    #Make AOI concave
-    concave_aoi <- st_concave_hull(points$geometry, ratio = 0.35)
-    concave_aoi <- st_transform(concave_aoi, 4326)
+    aoi_list <- list() #to save subAOIs
+    for (i in seq(length(unique(points$clusterdb)))) {
+      
+      #Make AOI concave
+      concave_aoi <- st_concave_hull(points$geometry[points$clusterdb==i], ratio = 0.20)
+      concave_aoi <- st_transform(concave_aoi, 4326)
+      
+      #save it to join later
+      aoi_list[[i]] <- concave_aoi
+      rm(concave_aoi)
+    }
+    AOI_merged <- do.call(c, aoi_list)
+    AOI_merged <- st_sf(clusters = seq(1:length(AOI_merged)), geometry = AOI_merged)
     
-    AOI <- st_intersection(concave_aoi, municipal_aoi) #Remove extra area sometime generated by concave
+    AOI <- st_intersection(AOI_merged, municipal_aoi) #Remove extra area sometime generated by concave
     
   }
-  message("After DBSCAN")
+  message("DBSCAN succesful")
   
   if(plot){print(mapview(AOI))}
   
   #save the urban_border
   saveRDS(AOI,
-          file = paste0("MUST_downloaded_data/",city_name,"/urban_border"))
+          file = paste0("MUST_downloaded_data/",city_name,"/urban_border_",dateYear))
   
   return(AOI) #Return the shapefile
 }
