@@ -8,11 +8,8 @@ get_urban_border(
   city_name,
   historic = F,
   date = NULL,
-  interactive = F,
-  dbscan = T,
   eps = 1000,
-  minPts = 100,
-  plot = F
+  minPts = 100
 )
 }
 \arguments{
@@ -22,13 +19,13 @@ get_urban_border(
 
 \item{date}{character value. Which date/time to retrieve the snapshot from Ohsome}
 
-\item{interactive}{TRUE or FALSE. Allows user to selct municipal borders through Mapview. This is not recommended, but can help with problems if this function returns borders for the wrong city.}
-
-\item{dbscan}{TRUE or FALSE. Use Density-based spatial clustering of applications with noise (DBSCAN) to find urban clusters.}
-
 \item{eps}{Distance to be considered}
 
 \item{minPts}{Minimum points for consideration of cluster}
+
+\item{interactive}{TRUE or FALSE. Allows user to selct municipal borders through Mapview. This is not recommended, but can help with problems if this function returns borders for the wrong city.}
+
+\item{dbscan}{TRUE or FALSE. Use Density-based spatial clustering of applications with noise (DBSCAN) to find urban clusters.}
 
 \item{plot}{legacy. Can be set to TRUE}
 }

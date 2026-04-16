@@ -21,7 +21,7 @@
 get_data_openeo <- function(aoi, #some aoi object/border
                             city_name, #to check if we have data already or save name with
                             startdate, enddate,#Start and end analysis in time
-                            satellite, #SENT-2, LSAT8
+                            satellite, #SENT-2, LSAT5/7/8
                             indicator, #NDVI, EVI, LST
                             method,
                             cloud_threshold = 50) {
@@ -44,11 +44,8 @@ if(is.null(pre_download_check_result)){
     }
   
   #Landsat 8
-  if(satellite == "landsat8"){
-    idSat <- "LANDSAT8_L2"
-    mask_band <- "QA_PIXEL"
-    mask_values <- c(22280,23888,24088,24200,24328,24456)
-    cloud_property <- "eo:cloud_cover"
+  if(satellite == "landsat"){
+    idSat <- "LANDSAT_BIMONTHLY_MOSAIC"
     dn_offset <- 0
     }
   
@@ -56,7 +53,7 @@ if(is.null(pre_download_check_result)){
   if(indicator == "NDVI"){bandsIndicator <- c("B08", "B04")} #NIR then red
   if(indicator == "EVI"){bandsIndicator <- c("B02", "B04", "B08")} #
   if(indicator == "MSAVI"){bandsIndicator <- c("B08", "B04")} # doi.org/10.1016/0034-4257(94)90134-1
-  if(indicator == "LST"){bandsIndicator <- c("ST_B10")}
+  if(indicator == "LST"){bandsIndicator <- c("B07")} #10.7717/peerj.18585
   if(indicator == "NDWI"){bandsIndicator <- c("B8A", "B11")} # doi.org/10.1016/j.ecolind.2025.113757
   
   
@@ -83,14 +80,17 @@ if(is.null(pre_download_check_result)){
             spatial_extent = list(west = aoi[1], south = aoi[2],
                                   east = aoi[3], north = aoi[4]),
             temporal_extent = c(startdate, enddate),
-            bands = c(bandsIndicator, mask_band),
-            properties = list(
+            bands = 
+              if(idSat == "SENTINEL2_L2A"){c(bandsIndicator, mask_band)}else{bandsIndicator},
+            if(idSat == "SENTINEL2_L2A"){properties = list( #landsat doesn't have this property
               "eo:cloud_cover" = function(x) x <= cloud_threshold
             )
+            }
   )
   print("Found image collection")
   
   #2.5 data masking
+  if(idSat == "SENTINEL2_L2A"){ #landsat is already masked etc.
   mask_cube = p$filter_bands(data, bands = mask_band)
   
   boolean_mask = p$apply(
@@ -99,9 +99,10 @@ if(is.null(pre_download_check_result)){
       p$array_contains(data = mask_values, value = x)
     }
   )
-  data = p$mask(data = data, mask = boolean_mask) # Apply the boolean mask to the original data
-  data = p$filter_bands(data, bands = bandsIndicator) # Remove the mask band before index calculation to keep the cube clean
-  print("Masked images")
+  data = p$mask(data = data, mask = boolean_mask) 
+  data = p$filter_bands(data, bands = bandsIndicator) 
+  print("Masked sentinel2 images")
+  }
   
   # 3. Calculate the indicator
   if(indicator == "NDVI") {
@@ -149,10 +150,7 @@ if(is.null(pre_download_check_result)){
       data = data,
       dimension = "bands",
       reducer = function(bands, context) {
-        st_band <- bands[1]
-        
-        #apply scaling to get kelvina nd then celsius
-        (st_band * 0.00341802) + 149 - 273.15
+        bands[1] - 150
       }
     )
   }
@@ -194,23 +192,23 @@ if(is.null(pre_download_check_result)){
                            format = "GTiff",
                            options = list(datatype = "float32"))
     compute_result(result,
-                   output_file = paste0("./MUST_downloaded_data/",city_name,"/",startdate,"_",enddate,"_",satellite,"_",indicator,"_",method,".tif"))
+                   output_file = paste0("./MUST_downloaded_data/",city_name,"/",startdate,"_",enddate,"_",satellite,"_",indicator,"_",method,"_raw.tif"))
   } else {
     stop("The openEO 'data' object is NULL")
   }
   
   cat("Data saved now pulling in R environment")
-  resultingRast <- terra::rast(paste0("MUST_downloaded_data/",city_name,"/",startdate,"_",enddate,"_",satellite,"_",indicator,"_",method,".tif"))
+  resultingRast <- terra::rast(paste0("MUST_downloaded_data/",city_name,"/",startdate,"_",enddate,"_",satellite,"_",indicator,"_",method,"_raw.tif"))
   
   #indicator specific clamping
   if(indicator %in% c("NDVI", "NDWI","MSAVI", "EVI")){resultingRast <- clamp(resultingRast, lower = -1, upper = 1, values = F)} #values above 1 are urnealistic
 
   terra::writeRaster(resultingRast, filename = paste0("MUST_downloaded_data/",city_name,"/",startdate,"_",enddate,"_",satellite,"_",indicator,"_",method,".tif"),
               overwrite = T)
-  
+  resultingRaster <- rast(paste0("MUST_downloaded_data/",city_name,"/",startdate,"_",enddate,"_",satellite,"_",indicator,"_",method,".tif"))
   #return object
   return(resultingRast)
-  
+  unlink(paste0("MUST_downloaded_data/",city_name,"/",startdate,"_",enddate,"_",satellite,"_",indicator,"_",method,"_raw.tif"))
 }
 else
 {
