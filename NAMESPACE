@@ -2,6 +2,7 @@
 
 export(build_dhm)
 export(classify_height)
+export(collect_data)
 export(cugicify)
 export(diff_gain_loss)
 export(find_closest_chr_match)

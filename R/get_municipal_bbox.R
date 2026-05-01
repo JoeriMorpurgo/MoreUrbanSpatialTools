@@ -1,18 +1,16 @@
-#' Retrieve municipal bbox as sf or GEE object
+#' Retrieve municipal bbox as sf
 #'
-#' This function is a wrapper around getbb and either returns an sf or EE object.
+#' This function is a wrapper around getbb and returns an sf object saved as an .rds on drive.
 #' NOTE: 
 #' Literature: 
 #' @param city_name character value. name of a city to retrieve the bbox for.
-#' @param EE TRUE or FALSE. If the returned object should be suitable for GEE
 #' @export
 #' @examples
 #' PLACEHOLDER()
 #' 
 
 ############ get_municipal_bbox #############
-get_municipal_bbox <- function(city_name,
-                               EE = F){ #If it needs to be for EE, 
+get_municipal_bbox <- function(city_name){ 
   
 #Check if we already have this data downloaded
 pre_download_check_result <- pre_download_check(city_name = city_name,
@@ -20,6 +18,7 @@ pre_download_check_result <- pre_download_check(city_name = city_name,
 if(is.null(pre_download_check_result)){ #if there is no file already, run the code.
   
   #Urban defined by OSM
+  print("Querying municipal bbox")
   urban_bbox_matrix <-  getbb(city_name, format_out = "matrix")
   
   # Extract corners from bbox matrix
@@ -45,14 +44,13 @@ if(is.null(pre_download_check_result)){ #if there is no file already, run the co
     )
   )
   
-  if(EE){
-    urban_bbox <- st_geometry(urban_bbox)
-    urban_bbox <- sf_as_ee(urban_bbox)
-  }
+  #saving the border
+  print("Saving requested bbox to wd")
   saveRDS(urban_bbox,
-              file = paste0("MUST_downloaded_data/",city_name,"/municipal_bbox"))
+              file = paste0("MUST_downloaded_data/",city_name,"/municipal_bbox.rds"))
   
-  return(urban_bbox) #To be used in ee_as_raster
+  #bbox to return
+  return(urban_bbox) 
   
 }
 else

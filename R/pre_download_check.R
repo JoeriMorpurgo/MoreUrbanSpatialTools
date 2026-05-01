@@ -54,7 +54,7 @@ pre_download_check <- function(city_name, object){
     
     if(file_ext(objectPath) == "tif"){retrievedObject <- rast(objectPath)}
     if(file_ext(objectPath) == "gpkg"){retrievedObject <- vect(objectPath)}
-    if(file_ext(objectPath) == ""){retrievedObject <- readRDS(objectPath)}
+    if(file_ext(objectPath) == ""| file_ext(objectPath) == "rds"){retrievedObject <- readRDS(objectPath)}
     
     return(retrievedObject)
   }

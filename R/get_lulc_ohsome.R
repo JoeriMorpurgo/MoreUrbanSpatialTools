@@ -17,7 +17,8 @@
 get_lulc_ohsome <- function(aoi, date) {
 
 #time
-year <- format(as.Date(date),"%Y")  
+year <- format(as.Date(date),"%Y") 
+if(is.character(aoi)){city_name <- aoi}
 
 #Check if we already have this data downloaded
 pre_download_check_result <- pre_download_check(city_name = aoi,
@@ -37,7 +38,7 @@ if(is.null(pre_download_check_result)){ #No LULC object found
     
   } else if(is.character(aoi)){
     cat("Using, ", aoi, " to query bbox from OSM")
-    bbox_vals <- get_municipal_border(aoi, historic = F)
+    bbox_vals <- get_municipal_border(city_name = aoi, historic = T, date = date)
   } else {
     stop("Unsupported spatial object. Use terra, raster, sf, or character value.")
   }

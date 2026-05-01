@@ -18,7 +18,7 @@ get_municipal_border <- function(city_name,
                                  date = NULL) {
 
 #date to year  transformation
-dateYear <- year(as.POSIXct(startdate))
+dateYear <- year(as.POSIXct(date))
     
 #Check if we already have this data downloaded
 pre_download_check_result <- pre_download_check(city_name = city_name,
@@ -26,14 +26,11 @@ pre_download_check_result <- pre_download_check(city_name = city_name,
 if(is.null(pre_download_check_result)){ #if there is no file already, run the code.  
   
   
-  #Administrative borders for illustration purposes
-  message("Querying administrative boundary of the municipality")
-  
+
   #Historic or current border?
   if(historic){  #Historic Ohsome data
     
           #bbox
-          message("Querying historic Municipal bbox")
           city_bbox <- get_municipal_bbox(city_name)
           city_bbox <- st_simplify(city_bbox, dTolerance = 0.1, preserveTopology = TRUE)
           city_bbox <- st_make_valid(city_bbox)
@@ -48,9 +45,10 @@ if(is.null(pre_download_check_result)){ #if there is no file already, run the co
             clipGeometry = T)
           
           #Send request
+          message("querying municipal borders")
           res <- ohsome_post(query) 
           
-          message("Received historic municipal border. Making geometry file...")
+          message("Received border. Making spatial object.")
           #Code to select best fit for city.... This is a bit roundabout but OK....
           max_dist = 0.95
           element <- integer(0)
@@ -76,21 +74,16 @@ if(is.null(pre_download_check_result)){ #if there is no file already, run the co
   }else{ 
     
           #Current OSM data
-          message("Getting bbox")
           city_bbox <- getbb(city_name)
-          message("Sending request for OSM border")
-          # admin_border <- opq(bbox = city_bbox) %>%
-          #   add_osm_feature(key = "boundary", value = "administrative") %>%
-          #   add_osm_feature(key = "admin_level", value = "8") %>%
-          #   osmdata_sf(quiet = F)
           
+
           #Query
+          message("API request OSM border")
           query <- opq(bbox = city_bbox) %>%
             add_osm_feature(key = "boundary", value = "administrative") %>%
             add_osm_feature(key = "admin_level", value = "8")
           
           # Send the request robustly
-          message("Sending request for OSM border")
           admin_border <- robust_api_request(
             osm_function = osmdata_sf,  # function to call
             q = query,                   # the opq query object
@@ -98,7 +91,7 @@ if(is.null(pre_download_check_result)){ #if there is no file already, run the co
           )
           
           
-          message("Received OSM borders")
+          message("Received borders")
           admin_border <- admin_border$osm_multipolygons
           
           #Code to select best fit for city.... This is a bit roundabout but OK....

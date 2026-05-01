@@ -2,17 +2,15 @@
 % Please edit documentation in R/get_municipal_bbox.R
 \name{get_municipal_bbox}
 \alias{get_municipal_bbox}
-\title{Retrieve municipal bbox as sf or GEE object}
+\title{Retrieve municipal bbox as sf}
 \usage{
-get_municipal_bbox(city_name, EE = F)
+get_municipal_bbox(city_name)
 }
 \arguments{
 \item{city_name}{character value. name of a city to retrieve the bbox for.}
-
-\item{EE}{TRUE or FALSE. If the returned object should be suitable for GEE}
 }
 \description{
-This function is a wrapper around getbb and either returns an sf or EE object.
+This function is a wrapper around getbb and returns an sf object saved as an .rds on drive.
 NOTE:
 Literature:
 }

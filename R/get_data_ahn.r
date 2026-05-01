@@ -16,11 +16,11 @@ get_data_ahn <- function(date, city_name) {
 
   options(timeout = max(900, getOption("timeout")))
   
-#year to version
-year <- str_extract(date, "\\d{4}")
-if(year %in% c(2024:2026)){version <- "AHN5"}
-if(year %in% c(2020:2023)){version <- "AHN4"}
-if(year %in% c(2014:2019)){version <- "AHN3"}
+  #year to version
+  year <- str_extract(date, "\\d{4}")
+  if(year %in% c(2024:2026)){version <- "AHN5"}
+  if(year %in% c(2020:2023)){version <- "AHN4"}
+  if(year %in% c(2014:2019)){version <- "AHN3"}
   
 #Check if we already have this data downloaded
 pre_download_check_result <- pre_download_check(city_name = city_name,
