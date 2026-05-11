@@ -12,7 +12,9 @@
 #' 
 
 collect_data <- function(city_name,
-                         path){
+                         path,
+                         method, #max or median
+                         AHN = F){
 
 #to revert the WD after function  
 originalPath <- getwd()  
@@ -22,7 +24,7 @@ if(getwd()!=path){setwd(path)}
 #starting date of Sentinel data
 startdate <- "2017-01-01"
 
-for(timestep in 0:8) { #2025 currently, but should scale in future automatically
+for(timestep in 0:7) { #2025 currently, but should scale in future automatically
 
   #start and end time
   startdate_time <- as.character(as.POSIXct(startdate)+years(timestep))
@@ -37,14 +39,14 @@ for(timestep in 0:8) { #2025 currently, but should scale in future automatically
   
       #sentinel2 data retrieval
       print(paste0("Retrieving RS S2 data for ",city_name, " in year ", startdate_time))
-      for (RS in c("NDVI","MSAVI","NDWI")) {
+      for (RS in c("NDVI","MSAVI","NDWI", "EVI")) {
         get_data_openeo(municipal_border,
                         city_name = city_name,
                         startdate = startdate_time,
                         enddate = enddate_time,
                         satellite = "sentinel2",
                         indicator = RS,
-                        method = "max",
+                        method = method,
                         cloud_threshold = 50)
       }
   
@@ -55,7 +57,7 @@ for(timestep in 0:8) { #2025 currently, but should scale in future automatically
                       enddate = enddate_time,
                       satellite = "landsat",
                       indicator = "LST",
-                      method = "max",
+                      method = method,
                       cloud_threshold = 50)
       
       
@@ -66,7 +68,7 @@ for(timestep in 0:8) { #2025 currently, but should scale in future automatically
       
       #get veg structure data
       print(paste0("Calculcating vegetation structure ",city_name, " in year ", startdate_time))
-      if(str_detect(city_name, "Netherland")){
+      if(str_detect(city_name, "Netherland") & AHN == T){
         get_data_ahn(city_name = city_name,#this only works for the netherlands
                      date = startdate_time)}else{veg_structure_via_lulc(lulc)}
       

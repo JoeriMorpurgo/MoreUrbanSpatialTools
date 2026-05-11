@@ -22,7 +22,7 @@ get_data_openeo <- function(aoi, #some aoi object/border
                             city_name, #to check if we have data already or save name with
                             startdate, enddate,#Start and end analysis in time
                             satellite, #SENT-2, LSAT5/7/8
-                            indicator, #NDVI, EVI, LST
+                            indicator, #NDVI, NDWI, MSAVI EVI, LST
                             method,
                             cloud_threshold = 50) {
   
@@ -38,9 +38,6 @@ if(is.null(pre_download_check_result)){
     mask_band <- "SCL"
     mask_values <- c(1,3,8,9,10,11)
     cloud_property <- "eo:cloud_cover"
-    # To account for shift, i.e. in GEE harmonized dataset
-    dn_offset <- 1000
-    shift_date <- "2022-01-25"
     }
   
   #Landsat 8
@@ -82,9 +79,7 @@ if(is.null(pre_download_check_result)){
             temporal_extent = c(startdate, enddate),
             bands = 
               if(idSat == "SENTINEL2_L2A"){c(bandsIndicator, mask_band)}else{bandsIndicator},
-            if(idSat == "SENTINEL2_L2A"){properties = list( #landsat doesn't have this property
-              "eo:cloud_cover" = function(x) x <= cloud_threshold
-            )
+              if(idSat == "SENTINEL2_L2A"){properties = list("eo:cloud_cover" = function(x) x <= cloud_threshold)#not for landsat
             }
   )
   print("Found image collection")
@@ -121,9 +116,9 @@ if(is.null(pre_download_check_result)){
       data = data,
       dimension = "bands",
       reducer = function(bands, context) {
-        blue <- bands[1]/10000
-        red <- bands[2]/10000
-        nir <- bands[3]/10000
+        blue <- bands[1]
+        red <- bands[2]
+        nir <- bands[3]
         
         #evi formula
         (2.5*(nir-red))/(nir+6*red-7.5*blue+1)
@@ -188,19 +183,34 @@ if(is.null(pre_download_check_result)){
   # 5. Save and Download
   # Check if 'data' actually exists before calling save_result
   if (!is.null(data)) {
-    result = p$save_result(data = data,
-                           format = "GTiff",
-                           options = list(datatype = "float32"))
-    compute_result(result,
-                   output_file = paste0("./MUST_downloaded_data/",city_name,"/",startdate,"_",enddate,"_",satellite,"_",indicator,"_",method,"_raw.tif"))
+    
+    #keep running the request until the file is here
+    attempt <- 1
+    max_attempts <- 5
+    while (!file.exists(paste0("./MUST_downloaded_data/",city_name,"/",startdate,"_",enddate,"_",satellite,"_",indicator,"_",method,"_raw.tif")) &&
+           attempt <= max_attempts) { #repeat this task until file exists
+      
+      #calc and retrieve 
+      result = p$save_result(data = data,
+                             format = "GTiff",
+                             options = list(datatype = "float32"))
+      compute_result(result,
+                     output_file = paste0("./MUST_downloaded_data/",city_name,"/",startdate,"_",enddate,"_",satellite,"_",indicator,"_",method,"_raw.tif"))
+      
+      #add to the attemptcounter
+      Sys.sleep(10)
+      attempt <- attempt + 1
+      cat("attempt(s)"attempt)
+    }
   } else {
     stop("The openEO 'data' object is NULL")
   }
   
+  
+  #pulling data and indicator specific clamping
   cat("Data saved now pulling in R environment")
   resultingRast <- terra::rast(paste0("MUST_downloaded_data/",city_name,"/",startdate,"_",enddate,"_",satellite,"_",indicator,"_",method,"_raw.tif"))
   
-  #indicator specific clamping
   if(indicator %in% c("NDVI", "NDWI","MSAVI", "EVI")){resultingRast <- clamp(resultingRast, lower = -1, upper = 1, values = F)} #values above 1 are urnealistic
 
   terra::writeRaster(resultingRast, filename = paste0("MUST_downloaded_data/",city_name,"/",startdate,"_",enddate,"_",satellite,"_",indicator,"_",method,".tif"),

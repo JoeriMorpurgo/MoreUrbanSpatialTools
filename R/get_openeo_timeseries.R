@@ -34,18 +34,19 @@ get_timeseries_openeo <- function(aoi,
     mask_values <- c(1,3,8,9,10,11) # Filter clouds, shadows, etc.
   }
   
+  #Landsat 8
   if(satellite == "landsat8"){
-    idSat <- "LANDSAT8_L2"
-    mask_band <- "QA_PIXEL"
-    mask_values <- c(22280,23888,24088,24200,24328,24456)
+    idSat <- "LANDSAT_BIMONTHLY_MOSAIC"
+    dn_offset <- 0
   }
+  
   
   # Set bands for indicator
   bandsIndicator <- switch(indicator,
                            "NDVI"  = c("B08", "B04"),
                            "EVI"   = c("B02", "B04", "B08"),
                            "MSAVI" = c("B08", "B04"),
-                           "LST"   = c("ST_B10"),
+                           "LST"   = c("B07"),
                            "NDWI"  = c("B8A", "B11"))
   
   ## 2. Connection & Login
@@ -86,9 +87,9 @@ get_timeseries_openeo <- function(aoi,
     reducer = function(bands, context) {
       if(indicator == "NDVI")  return(p$normalized_difference(bands[1], bands[2]))
       if(indicator == "NDWI")  return(p$normalized_difference(bands[1], bands[2]))
-      if(indicator == "EVI")   return((2.5 * (bands[3]/10000 - bands[2]/10000)) / (bands[3]/10000 + 6 * bands[2]/10000 - 7.5 * bands[1]/10000 + 1))
+      if(indicator == "EVI")   return((2.5 * (bands[3] - bands[2])) / (bands[3] + 6 * bands[2] - 7.5 * bands[1] + 1))
       if(indicator == "MSAVI") return((2 * bands[1] + 1 - ((2 * bands[1] + 1)^2 - 8 * (bands[1] - bands[2]))^0.5) / 2)
-      if(indicator == "LST")   return((bands[1] * 0.00341802) + 149 - 273.15)
+      if(indicator == "LST")   return((bands[1] -150))
     }
   )
   
