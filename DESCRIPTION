@@ -14,3 +14,18 @@ RoxygenNote: 7.3.3.9000
 Depends: 
     R (>= 3.5)
 LazyData: true
+Imports: 
+    dplyr,
+    fasterize,
+    jsonlite,
+    lubridate,
+    ohsome,
+    openeo,
+    osmdata,
+    raster,
+    sf,
+    stringr,
+    terra,
+    xfun
+Suggests: 
+    mapview

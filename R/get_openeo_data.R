@@ -200,7 +200,7 @@ if(is.null(pre_download_check_result)){
       #add to the attemptcounter
       Sys.sleep(10)
       attempt <- attempt + 1
-      cat("attempt(s)"attempt)
+      cat("attempt(s)",attempt)
     }
   } else {
     stop("The openEO 'data' object is NULL")

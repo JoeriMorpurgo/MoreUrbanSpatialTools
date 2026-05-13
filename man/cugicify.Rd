@@ -4,7 +4,14 @@
 \alias{cugicify}
 \title{Make the Consolidated Urban Green Infrastructure Classification}
 \usage{
-cugicify(city_name, date, veg_coverage, veg_structure, lulc)
+cugicify(
+  city_name,
+  date,
+  veg_coverage,
+  veg_structure,
+  lulc,
+  alternative_lookup = NULL
+)
 }
 \arguments{
 \item{city_name}{character. Name of the city for the analysis}
@@ -16,6 +23,8 @@ cugicify(city_name, date, veg_coverage, veg_structure, lulc)
 \item{veg_structure}{spatialObject. Indicating vegetation height. Either raster with numeric values OR vector with values ("grass","shrub","wooded").}
 
 \item{lulc}{vector. Contains LULC that relates to the lulc_info data table associated with the package}
+
+\item{alternative_lookup}{dataframe. A dataframe that functions as a lookup table. first column should be the classes or values from your input lulc map, second column should be the new values assigned. Second column can be identical to first column if user wishes not to change this. However, downstream function may not work if the CUGIC LULC classes are not used.}
 }
 \description{
 This function take in a ndvi map and classified height maps and combines to map the CUGIC.

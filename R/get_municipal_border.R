@@ -1,6 +1,6 @@
-#' Retrieve current or histroric municipal border limited to annual temporal resolution
+#' Retrieve current or historic municipal border limited to annual temporal resolution
 #'
-#' This function is retrieves the municipal border for either current time (Open Street Maps) or historic (Ohsome).
+#' This function is retrieves the municipal border for either current time (Open Street Maps) or historic (Ohsome). The Ohsome fnction also iteratively check lower administrative levels if no data is found at level 8. This is more robust and will be present in the OSM argument at a later point.
 #' NOTE: 
 #' Literature: 
 #' @param city_name character value. name of a city to retrieve the bbox for.
@@ -36,19 +36,28 @@ if(is.null(pre_download_check_result)){ #if there is no file already, run the co
           city_bbox <- st_make_valid(city_bbox)
           Sys.sleep(1)
           
-          #API query
-          query <- ohsome_elements_geometry(
-            boundary = city_bbox, 
-            filter = "boundary=administrative and admin_level=8", 
-            time = date,
-            properties = "tags", 
-            clipGeometry = T)
+                #Robust API query
+                #sometimes municipal borders are on different levels so have it check them iteratively.
+                for (level in c(8,7,6)) {
+                  
+                  #query itself  
+                  query <- ohsome_elements_geometry(
+                    boundary = city_bbox, 
+                    filter = paste0("boundary=administrative and admin_level=",level), 
+                    time = date,
+                    properties = "tags", 
+                    clipGeometry = T)
+                  
+                    #Send request
+                    message("querying municipal borders")
+                    res <- ohsome_post(query) 
+                    
+                    #check if we have a result
+                    if(nrow(res)>0){break}else{cat("No result for query on administrative level ", level)}
+                }
+          message("Received border from query.")        
           
-          #Send request
-          message("querying municipal borders")
-          res <- ohsome_post(query) 
           
-          message("Received border. Making spatial object.")
           #Code to select best fit for city.... This is a bit roundabout but OK....
           max_dist = 0.95
           element <- integer(0)

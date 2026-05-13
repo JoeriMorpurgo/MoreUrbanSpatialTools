@@ -6,6 +6,8 @@
 #' Literature: 
 #' @param city_name character value. name of a city and country to retrieve data for. Format should be "city, country". 
 #' @param path character value. path to where data should be stored.
+#' @param method character value. Either max or median.
+#' @param AHN logic. Shoudl always be F, unless the analysis is for a city in the Netherlands.
 #' @export
 #' @examples
 #' PLACEHOLDER()

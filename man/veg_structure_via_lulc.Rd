@@ -4,12 +4,12 @@
 \alias{veg_structure_via_lulc}
 \title{Generates a classified height map based on LULC and tree points from OSM.}
 \usage{
-veg_structure_via_lulc(lulc_map)
+veg_structure_via_lulc(lulc_map, alternative_lookup = NULL)
 }
 \arguments{
-\item{city_name}{character. Name of city and country.}
+\item{lulc_map}{sf object. Should contain classes that relate to a CUGIC height class.}
 
-\item{date}{character. DD-MM-YYYY for date to retrieve data from}
+\item{alternative_lookup}{dataframe. A dataframe that functions as a lookup-table, where the first column contains the names of the classes of your lulc_map and the second column contains the names of the CUGIC height classes (grass, shrub or wooded).}
 }
 \description{
 NOTE:

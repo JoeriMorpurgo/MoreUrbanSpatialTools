@@ -2,7 +2,7 @@
 % Please edit documentation in R/get_municipal_border.R
 \name{get_municipal_border}
 \alias{get_municipal_border}
-\title{Retrieve current or histroric municipal border limited to annual temporal resolution}
+\title{Retrieve current or historic municipal border limited to annual temporal resolution}
 \usage{
 get_municipal_border(city_name, historic = FALSE, date = NULL)
 }
@@ -14,7 +14,7 @@ get_municipal_border(city_name, historic = FALSE, date = NULL)
 \item{date}{date/time. Which point in time to retrieve data from Ohsome}
 }
 \description{
-This function is retrieves the municipal border for either current time (Open Street Maps) or historic (Ohsome).
+This function is retrieves the municipal border for either current time (Open Street Maps) or historic (Ohsome). The Ohsome fnction also iteratively check lower administrative levels if no data is found at level 8. This is more robust and will be present in the OSM argument at a later point.
 NOTE:
 Literature:
 }

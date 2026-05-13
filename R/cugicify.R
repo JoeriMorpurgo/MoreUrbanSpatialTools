@@ -8,6 +8,7 @@
 #' @param veg_coverage raster. Fractional coverage by vegetation or absolute coverage by vegetation.
 #' @param veg_structure spatialObject. Indicating vegetation height. Either raster with numeric values OR vector with values ("grass","shrub","wooded").
 #' @param lulc vector. Contains LULC that relates to the lulc_info data table associated with the package
+#' @param alternative_lookup dataframe. A dataframe that functions as a lookup table. first column should be the classes or values from your input lulc map, second column should be the new values assigned. Second column can be identical to first column if user wishes not to change this. However, downstream function may not work if the CUGIC LULC classes are not used.
 #' @keywords classification, height, proportion
 #' @export
 #' @examples
@@ -15,7 +16,8 @@
 #' 
 
 cugicify <- function(city_name, date,
-                     veg_coverage, veg_structure, lulc) {
+                     veg_coverage, veg_structure, lulc,
+                     alternative_lookup = NULL) {
 
 year <- format(as.Date(date),"%Y")
   
@@ -121,11 +123,17 @@ cugic <- lapp(veg_stack, fun = cugic_fun)
 levels(cugic) <- lookuptable_veg_struc
 names(cugic) <- "veg_struc_"
 
+
 #prep lulc 
-lookup <- data.frame(
-  old = lulc_info$Value,
-  new = lulc_info$CUGIC.classes
-)
+if(is.null(alternative_lookup)){
+  lookup <- data.frame(
+    old = lulc_info$Value,
+    new = lulc_info$CUGIC.classes
+  )
+}else{
+  lookup <- alternative_lookup
+  colnames(lookup) <- c("old", "new")
+}
 
 lulc$CUGIC_classes <- lookup$new[match(lulc$lulc, lookup$old)]
 

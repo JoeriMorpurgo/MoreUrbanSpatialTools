@@ -4,12 +4,16 @@
 \alias{collect_data}
 \title{Retrieve data objects for a city from 2017 to current.}
 \usage{
-collect_data(city_name, path)
+collect_data(city_name, path, method, AHN = F)
 }
 \arguments{
 \item{city_name}{character value. name of a city and country to retrieve data for. Format should be "city, country".}
 
 \item{path}{character value. path to where data should be stored.}
+
+\item{method}{character value. Either max or median.}
+
+\item{AHN}{logic. Shoudl always be F, unless the analysis is for a city in the Netherlands.}
 }
 \description{
 This function is a wrapper around several functions in the MUST package. The intended use is to simplify the data gathering process.
