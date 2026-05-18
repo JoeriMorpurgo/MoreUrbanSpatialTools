@@ -22,20 +22,20 @@ classify_height <- function(clean_dhm, template){
                          1, 5, 2,     # Shrub
                          5, 99999, 3  # Tree
   ), ncol = 3, byrow = TRUE)
-  height_class <- classify(clean_dhm, reclass_df)
+  height_class <- terra::classify(clean_dhm, reclass_df)
   
   cat("Separating height classes...\n")
-  height1 <- ifel(height_class == 1, 1, 0) #Make binary
-  height1 <- subst(height1, NA, 0) #So all cells are filled for proportional calcs.
-  height2 <- ifel(height_class == 2, 1, 0)
-  height2 <- subst(height2, NA, 0)
-  height3 <- ifel(height_class == 3, 1, 0)
-  height3 <- subst(height3, NA, 0)
+  height1 <- terra::ifel(height_class == 1, 1, 0) #Make binary
+  height1 <- terra::subst(height1, NA, 0) #So all cells are filled for proportional calcs.
+  height2 <- terra::ifel(height_class == 2, 1, 0)
+  height2 <- terra::subst(height2, NA, 0)
+  height3 <- terra::ifel(height_class == 3, 1, 0)
+  height3 <- terra::subst(height3, NA, 0)
   
   cat("Resampling height classes to template grid...\n")
-  height1 <- resample(height1, template, method = "average", threads = T)
-  height2 <- resample(height2, template, method = "average", threads = T)
-  height3 <- resample(height3, template, method = "average", threads = T)
+  height1 <- terra::resample(height1, template, method = "average", threads = T)
+  height2 <- terra::resample(height2, template, method = "average", threads = T)
+  height3 <- terra::resample(height3, template, method = "average", threads = T)
   
   cat("Combining proportional layers")
   density_height <- c(height1, height2, height3)

@@ -31,9 +31,9 @@ if(is.null(pre_download_check_result)){ #if there is no file already, run the co
   if(historic){  #Historic Ohsome data
     
           #bbox
-          city_bbox <- get_municipal_bbox(city_name)
-          city_bbox <- st_simplify(city_bbox, dTolerance = 0.1, preserveTopology = TRUE)
-          city_bbox <- st_make_valid(city_bbox)
+          city_bbox <- MUST::get_municipal_bbox(city_name)
+          city_bbox <- sf::st_simplify(city_bbox, dTolerance = 0.1, preserveTopology = TRUE)
+          city_bbox <- sf::st_make_valid(city_bbox)
           Sys.sleep(1)
           
                 #Robust API query
@@ -41,7 +41,7 @@ if(is.null(pre_download_check_result)){ #if there is no file already, run the co
                 for (level in c(8,7,6)) {
                   
                   #query itself  
-                  query <- ohsome_elements_geometry(
+                  query <- ohsome::ohsome_elements_geometry(
                     boundary = city_bbox, 
                     filter = paste0("boundary=administrative and admin_level=",level), 
                     time = date,
@@ -50,7 +50,7 @@ if(is.null(pre_download_check_result)){ #if there is no file already, run the co
                   
                     #Send request
                     message("querying municipal borders")
-                    res <- ohsome_post(query) 
+                    res <- ohsome::ohsome_post(query) 
                     
                     #check if we have a result
                     if(nrow(res)>0){break}else{cat("No result for query on administrative level ", level)}
@@ -69,7 +69,7 @@ if(is.null(pre_download_check_result)){ #if there is no file already, run the co
                 element <- agrep(tolower(city), tolower(res$name), max.distance = max_dist, value = F)
               }
               if (length(element) > 1) {
-                d <- adist(tolower(city), tolower(res$name[element]))
+                d <- utils::adist(tolower(city), tolower(res$name[element]))
                 element <- element[which.min(d)]
               }
             }
@@ -78,22 +78,22 @@ if(is.null(pre_download_check_result)){ #if there is no file already, run the co
           #Select the row with the correct geometry
           geometry <- res[element,]
           admin_border <- geometry$geometry
-          admin_border <- st_sf(geometry = admin_border)
+          admin_border <- sf::st_sf(geometry = admin_border)
           
   }else{ 
     
           #Current OSM data
-          city_bbox <- getbb(city_name)
+          city_bbox <- osmdata::getbb(city_name)
           
 
           #Query
           message("API request OSM border")
-          query <- opq(bbox = city_bbox) %>%
-            add_osm_feature(key = "boundary", value = "administrative") %>%
-            add_osm_feature(key = "admin_level", value = "8")
+          query <- osmdata::opq(bbox = city_bbox) %>%
+            osmdata::add_osm_feature(key = "boundary", value = "administrative") %>%
+            osmdata::add_osm_feature(key = "admin_level", value = "8")
           
           # Send the request robustly
-          admin_border <- robust_api_request(
+          admin_border <- MUST::robust_api_request(
             osm_function = osmdata_sf,  # function to call
             q = query,                   # the opq query object
             quiet = FALSE                # optional argument to osmdata_sf
@@ -114,7 +114,7 @@ if(is.null(pre_download_check_result)){ #if there is no file already, run the co
               print(element)
             }
             if (length(element) > 1) {
-              d <- adist(tolower(city), tolower(admin_border$name[element]))
+              d <- utils::adist(tolower(city), tolower(admin_border$name[element]))
               element <- element[which.min(d)]
             }
           }
@@ -122,12 +122,12 @@ if(is.null(pre_download_check_result)){ #if there is no file already, run the co
           
           
           geometry <- admin_border[element,]
-          admin_border <- st_geometry(geometry) #Just the geometry
+          admin_border <- sf::st_geometry(geometry) #Just the geometry
     
   }
   
   #save the result
-  saveRDS(admin_border,
+  base::saveRDS(admin_border,
               file = paste0("MUST_downloaded_data/",city_name,"/municipal_border_",dateYear))
   
   message("Requested border has been returned and saved")

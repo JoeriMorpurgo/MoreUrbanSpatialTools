@@ -20,9 +20,9 @@ diff_gain_loss <- function(raster_stack){
     baseline <- raster_stack
     
     #Stacks of gain and loss
-    diff_stack <- rast()
-    gains_stack <- rast()
-    losses_stack <- rast()
+    diff_stack <- terra::rast()
+    gains_stack <- terra::rast()
+    losses_stack <- terra::rast()
     
     for (j in c(2:nlyr(baseline))) {
       prev <- baseline[[j - 1]] #take prev layer
@@ -39,9 +39,9 @@ diff_gain_loss <- function(raster_stack){
       loss[diff >= 0] <- NA
       
       # Add to stacks
-      diff_stack <- c(diff_stack, diff)
-      gains_stack <- c(gains_stack, gain)
-      losses_stack <- c(losses_stack, loss)
+      diff_stack <- terra::c(diff_stack, diff)
+      gains_stack <- terra::c(gains_stack, gain)
+      losses_stack <- terra::c(losses_stack, loss)
       gc(full = T)
     }
     
@@ -51,8 +51,8 @@ diff_gain_loss <- function(raster_stack){
     names(losses_stack) <- paste("losses", names(losses_stack))
     
     #Cumulative gains/losses
-    total_gain <- app(gains_stack, sum, na.rm = TRUE)
-    total_loss <- app(losses_stack, sum, na.rm = TRUE)
+    total_gain <- terra::app(gains_stack, sum, na.rm = TRUE)
+    total_loss <- terra::app(losses_stack, sum, na.rm = TRUE)
 
     
   return(list(diff_stack, gains_stack, losses_stack, total_gain, total_loss))

@@ -19,7 +19,7 @@ if(is.null(pre_download_check_result)){ #if there is no file already, run the co
   
   #Urban defined by OSM
   print("Querying municipal bbox")
-  urban_bbox_matrix <-  getbb(city_name, format_out = "matrix")
+  urban_bbox_matrix <-  osmdata::getbb(city_name, format_out = "matrix")
   
   
   # Extract corners from bbox matrix
@@ -39,25 +39,25 @@ if(is.null(pre_download_check_result)){ #if there is no file already, run the co
   
   
   # Create sf polygon
-  urban_bbox <- st_sf(
-    geometry = st_sfc(
-      st_polygon(list(coords)),
+  urban_bbox <- sf::st_sf(
+    geometry = sf::st_sfc(
+      sf::st_polygon(list(coords)),
       crs = 4326
     )
   )
   
   
   #additional safety net and calc of bbox, which can capture flips in lat/long. Otherwise redundant and more/too specific.
-  urban_bbox_id <- getbb(city_name, format_out = "osm_type_id")
-  urban_bbox_id <- opq_osm_id(id = 398021, type = "relation") %>% osmdata_sf() %>% .$osm_multipolygons
-  urban_bbox_id <- st_as_sfc(st_bbox(urban_bbox_id))
+  urban_bbox_id <- osmdata::getbb(city_name, format_out = "osm_type_id")
+  urban_bbox_id <- osmdata::opq_osm_id(id = 398021, type = "relation") %>% osmdata::osmdata_sf() %>% .$osm_multipolygons
+  urban_bbox_id <- sf::st_as_sfc(sf::st_bbox(urban_bbox_id))
   
   #merge the bboxes
-  urban_bbox_merged <- st_union(urban_bbox, urban_bbox_id)
+  urban_bbox_merged <- sf::st_union(urban_bbox, urban_bbox_id)
   
   #saving the border
   print("Saving requested bbox to wd")
-  saveRDS(urban_bbox_merged,
+  base::saveRDS(urban_bbox_merged,
               file = paste0("MUST_downloaded_data/",city_name,"/municipal_bbox.rds"))
   
   #bbox to return

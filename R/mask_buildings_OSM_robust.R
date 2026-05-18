@@ -16,26 +16,26 @@
 mask_buildings_ohsome_robust <- function(rast, date = "2017-01-01T00:00:00Z") { 
   cat("Getting AOI from raster extent...\n")
     
-  e <- ext(rast)
-  bbox <- st_bbox(e)
-  bbox <- st_as_sfc(bbox)
-  st_crs(bbox) <- st_crs(rast)
+  e <- terra::ext(rast)
+  bbox <- sf::st_bbox(e)
+  bbox <- sf::st_as_sfc(bbox)
+  st_crs(bbox) <- sf::st_crs(rast)
   
   #failsafe for engineering CRS, tile M_38CN2
-  is_engi_crs <- grepl("^ENGCRS", st_crs(bbox)$wkt)
+  is_engi_crs <- grepl("^ENGCRS", sf::st_crs(bbox)$wkt)
   if (is_engi_crs) {
     message("BBox has an Engineering CRS (STEP 1), assigning EPSG:28992 (RDnew, IF INCORRECT STOP!)")
-    st_crs(bbox) <- 28992  # Amersfoort / RD New
+    sf::st_crs(bbox) <- 28992  # Amersfoort / RD New
   }
   
-  bbox <- st_transform(bbox, crs = st_crs("EPSG:4326"))
-  bbox <- st_geometry(bbox)
-  bbox <- st_make_valid(bbox)
+  bbox <- sf::st_transform(bbox, crs = st_crs("EPSG:4326"))
+  bbox <- sf::st_geometry(bbox)
+  bbox <- sf::st_make_valid(bbox)
   
   cat("Creating ohsome query for buildings at", date, "...\n")
   
   # define API query
-  buildings_sf <- ohsome_elements_geometry(
+  buildings_sf <- ohsome::ohsome_elements_geometry(
     boundary = bbox,
     time = date,
     filter = "building=*"
@@ -45,7 +45,7 @@ mask_buildings_ohsome_robust <- function(rast, date = "2017-01-01T00:00:00Z") {
   cat("Sending query to Ohsome")
   
   #Send API req with robust wrapper to retry upon fail  
-  buildings_sf_poly <- robust_api_request(
+  buildings_sf_poly <- MUST::robust_api_request(
     ohsome_post,
     buildings_sf
   )
@@ -60,19 +60,19 @@ mask_buildings_ohsome_robust <- function(rast, date = "2017-01-01T00:00:00Z") {
   cat(paste0("Masking raster with ", nrow(buildings_sf_poly), " building polygons at once...\n"))
   
   # Convert to terra vector and project to raster CRS
-  buildings_vect <- vect(buildings_sf_poly$geometry)
+  buildings_vect <- terra::vect(buildings_sf_poly$geometry)
   
   #failsafe
-  is_engi_crs <- grepl("^ENGCRS", st_crs(rast)$wkt)
+  is_engi_crs <- grepl("^ENGCRS", sf::st_crs(rast)$wkt)
   if (is_engi_crs) {
     message("BBox has an Engineering CRS (STEP 2), assigning EPSG:28992 (RDnew, IF INCORRECT STOP!)")
-    crs(rast) <- "epsg:28992"  # Amersfoort / RD New
+    terra::crs(rast) <- "epsg:28992"  # Amersfoort / RD New
   }
   
-  buildings_vect <- project(buildings_vect, crs(rast))
+  buildings_vect <- terra::project(buildings_vect, crs(rast))
   
   # Mask the raster: remove cells overlapping buildings
-  rast_masked <- mask(rast, buildings_vect, inverse = TRUE)
+  rast_masked <- terra::mask(rast, buildings_vect, inverse = TRUE)
   
   cat("Masking complete.\n")
   return(rast_masked)

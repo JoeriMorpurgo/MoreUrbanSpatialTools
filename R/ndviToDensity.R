@@ -17,12 +17,12 @@ ndviToDensity <- function(NDVI_raster,
     ndvi_max <- NDVI_raster@pntr@.xData$range_max
     NDVI_raster[NDVI_raster > ndvi_max] <- NA #nonsense but okay...
     NDVI_raster[NDVI_raster < ndvi_min] <- NA
-    output <- app(NDVI_raster, fun=function(x){((x-ndvi_min)/(ndvi_max-ndvi_min))})
+    output <- terra::app(NDVI_raster, fun=function(x){((x-ndvi_min)/(ndvi_max-ndvi_min))})
     output[is.na(output[])] <- 0
     
     #convert to m2
     if(m2){ # user wants m2
-      size <- cellSize(output)
+      size <- terra::cellSize(output)
       output <- size*output
     }
 

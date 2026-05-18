@@ -38,20 +38,20 @@ if(is.null(pre_download_check_result)){ #if there is no file already, run the co
     
   ##Find the municipal border to define the AOI
   cat("Getting municipal borders")
-  municipal_aoi <- get_municipal_border(city_name)
-  municipal_aoi <- st_make_valid(municipal_aoi)
+  municipal_aoi <- MUST::get_municipal_border(city_name)
+  municipal_aoi <- sf::st_make_valid(municipal_aoi)
   Sys.sleep(1)
   
   ##Retrieve the LULC
       # if(historic){
         
         message("Creating Ohsome boundary")
-        municipal_aoi_wip <- st_simplify(municipal_aoi, dTolerance = 0.1, preserveTopology = TRUE)
-        municipal_aoi_wip <- st_make_valid(municipal_aoi_wip)
-        aoi <- ohsome_boundary(municipal_aoi_wip)
+        municipal_aoi_wip <- sf::st_simplify(municipal_aoi, dTolerance = 0.1, preserveTopology = TRUE)
+        municipal_aoi_wip <- sf::st_make_valid(municipal_aoi_wip)
+        aoi <- ohsome::ohsome_boundary(municipal_aoi_wip)
         
         message("Requesting historic Ohsome data")
-        query <- ohsome_elements_geometry(
+        query <- ohsome::ohsome_elements_geometry(
           boundary = aoi,  
           filter = paste(
             "landuse=residential or",
@@ -63,12 +63,12 @@ if(is.null(pre_download_check_result)){ #if there is no file already, run the co
           time = date,
           properties = "tags",
           clipGeometry = TRUE)
-        AOI <- ohsome_post(query) #Send request
+        AOI <- ohsome::ohsome_post(query) #Send request
         
         #fix receieved qeury
-        AOI <- AOI[st_geometry_type(AOI) %in% c("POLYGON", "MULTIPOLYGON"), ]
-        AOI <- st_cast(AOI, "MULTIPOLYGON")
-        AOI <- st_make_valid(AOI)
+        AOI <- AOI[sf::st_geometry_type(AOI) %in% c("POLYGON", "MULTIPOLYGON"), ]
+        AOI <- sf::st_cast(AOI, "MULTIPOLYGON")
+        AOI <- sf::st_make_valid(AOI)
         message("Retrieved historic Ohsome data for ", city_name)
         
       # }
@@ -95,12 +95,12 @@ if(is.null(pre_download_check_result)){ #if there is no file already, run the co
   
   ##Define urban border
   #Hardcore omit bad geometry.... Shouldn've been fixed already.
-  AOI <- AOI[which(st_is_valid(AOI)),]
-  municipal_aoi <- municipal_aoi[which(st_is_valid(municipal_aoi)),]
+  AOI <- AOI[which(sf::st_is_valid(AOI)),]
+  municipal_aoi <- municipal_aoi[which(sf::st_is_valid(municipal_aoi)),]
   
   #Somee stuff
-  AOI <- suppressWarnings(st_intersection(AOI, municipal_aoi))
-  AOI <- st_make_valid(AOI)
+  AOI <- suppressWarnings(sf::st_intersection(AOI, municipal_aoi))
+  AOI <- sf::st_make_valid(AOI)
   
   
   #DBscan 
@@ -109,18 +109,18 @@ if(is.null(pre_download_check_result)){ #if there is no file already, run the co
     AOI <- AOI[!st_is_empty(AOI),]
     
     #Estimate cell size for raster via area of shapefile
-    extentInMeters <- ext(st_transform(AOI, 3857)) # grab the extent
+    extentInMeters <- terra::ext(sf::st_transform(AOI, 3857)) # grab the extent
     xMeters <- as.numeric(abs(extentInMeters[1] - extentInMeters[2])) #x in meters
     yMeters <- as.numeric(abs(extentInMeters[3] - extentInMeters[4])) #y in meters
     
     #LULC to points for DBSCAN
-    templateRaster <- raster(AOI,
+    templateRaster <- raster::raster(AOI,
                              nrows = xMeters/100, ncols = yMeters/100) #1 point per 10000m2
-    raster <- fasterize(AOI, templateRaster)
-    points <- rasterToPoints(raster, spatial = T)
-    points <- st_as_sf(points)
-    points <- st_transform(points, 3857)
-    coords <- as.data.frame(st_coordinates(points))
+    raster <- fasterize::fasterize(AOI, templateRaster)
+    points <- raster::rasterToPoints(raster, spatial = T)
+    points <- sf::st_as_sf(points)
+    points <- sf::st_transform(points, 3857)
+    coords <- as.data.frame(sf::st_coordinates(points))
     
     #DBSCAN
     message("Assigning clusters based on density")
@@ -131,34 +131,34 @@ if(is.null(pre_download_check_result)){ #if there is no file already, run the co
     
     #filter to right clusters
     points <- points %>%
-      group_by(clusterdb) %>%
-      count() %>%
-      filter(clusterdb != 0) #omit non-clusters 
+      dplyr::group_by(clusterdb) %>%
+      dplyr::count() %>%
+      dplyr::filter(clusterdb != 0) #omit non-clusters 
 
     
     aoi_list <- list() #to save subAOIs
     for (i in seq(length(unique(points$clusterdb)))) {
       
       #Make AOI concave
-      con_aoi <- st_convex_hull(points$geometry[points$clusterdb==i]
+      con_aoi <- sf::st_convex_hull(points$geometry[points$clusterdb==i]
                                 #, ratio = 0.75
                                 )
-      con_aoi <- st_transform(con_aoi, 4326)
+      con_aoi <- sf::st_transform(con_aoi, 4326)
       
       #save it to join later
       aoi_list[[i]] <- con_aoi
       rm(con_aoi)
     }
     AOI_merged <- do.call(c, aoi_list)
-    AOI_merged <- st_sf(clusters = seq(1:length(AOI_merged)), geometry = AOI_merged)
+    AOI_merged <- sf::st_sf(clusters = seq(1:length(AOI_merged)), geometry = AOI_merged)
     #plot(AOI_merged, main = "almere 2025 convex")
     
-    AOI <- st_intersection(AOI_merged, municipal_aoi) #Remove extra area sometime generated by concave
+    AOI <- sf::st_intersection(AOI_merged, municipal_aoi) #Remove extra area sometime generated by concave
     message("DBSCAN succesful")
   
 
   #save the urban_border
-  saveRDS(AOI,
+  base::saveRDS(AOI,
           file = paste0("MUST_downloaded_data/",city_name,"/urban_border_",dateYear))
   
   #Return the shapefile

@@ -41,9 +41,9 @@ pre_download_check <- function(city_name, object){
   #If there are multiple objects found
   if(length(objectPath) > 1){
     print("Multiple objects found. Trying to return object.")
-    if("tif" %in% file_ext(objectPath)){retrievedObject <- rast(objectPath[grepl("\\.tif$", objectPath)])}
-    if("gpkg" %in% file_ext(objectPath)){retrievedObject <- vect(objectPath)}
-    if("" %in% file_ext(objectPath)){retrievedObject <- readRDS(objectPath)}
+    if("tif" %in% xfun::file_ext(objectPath)){retrievedObject <- terra::rast(objectPath[grepl("\\.tif$", objectPath)])}
+    if("gpkg" %in% xfun::file_ext(objectPath)){retrievedObject <- terra::vect(objectPath)}
+    if("" %in% xfun::file_ext(objectPath)){retrievedObject <- base::readRDS(objectPath)}
     
     return(retrievedObject)
   }
@@ -52,9 +52,9 @@ pre_download_check <- function(city_name, object){
   if(length(objectPath) == 1){
     print("Object has been downloaded earlier. Retrieving from the folder.")
     
-    if(file_ext(objectPath) == "tif"){retrievedObject <- rast(objectPath)}
-    if(file_ext(objectPath) == "gpkg"){retrievedObject <- vect(objectPath)}
-    if(file_ext(objectPath) == ""| file_ext(objectPath) == "rds"){retrievedObject <- readRDS(objectPath)}
+    if(xfun::file_ext(objectPath) == "tif"){retrievedObject <- terra::rast(objectPath)}
+    if(xfun::file_ext(objectPath) == "gpkg"){retrievedObject <- terra::vect(objectPath)}
+    if(xfun::file_ext(objectPath) == ""| xfun::file_ext(objectPath) == "rds"){retrievedObject <- base::readRDS(objectPath)}
     
     return(retrievedObject)
   }

@@ -22,7 +22,7 @@ merge_osm_polygons <- function(osmdata_obj) {
   if (is.null(multipoly)) return(poly)
   
   # Find common columns to avoid bind_rows() errors
-  common_cols <- intersect(names(poly), names(multipoly))
+  common_cols <- base::intersect(names(poly), names(multipoly))
   
   poly <- poly[, common_cols]
   multipoly <- multipoly[, common_cols]

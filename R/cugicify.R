@@ -30,7 +30,7 @@ if(is.null(pre_download_check_result)){ #if there is no file already, run the co
 #prep vegetation coverage
 #back transform absolute values
   if(any(values(veg_coverage) > 1)){
-  cell_area <- prod(res(veg_coverage))
+  cell_area <- terra::prod(terra::res(veg_coverage))
   
   veg_coverage <- veg_coverage / cell_area
 
@@ -42,22 +42,22 @@ veg_coverage[veg_coverage > 1] <- 1
 
 
 #prep vegation structure
-veg_structure <- project(veg_structure, crs(veg_coverage))
+veg_structure <- terra::project(veg_structure, terra::crs(veg_coverage))
 if(class(veg_structure) == "SpatRaster"){ #if dhm
   grass  <- veg_structure <= 1
   grass <- as.numeric(grass)
-  grass <- resample(grass, veg_coverage) #asess propotional grass cov.
+  grass <- terra::resample(grass, veg_coverage) #asess propotional grass cov.
   shrub  <- veg_structure > 1 & veg_structure <= 5
   shrub <- as.numeric(shrub)
-  shrub <- resample(shrub, veg_coverage)
+  shrub <- terra::resample(shrub, veg_coverage)
   wooded <- veg_structure > 5
   wooded <- as.numeric(wooded)
-  wooded <- resample(wooded, veg_coverage)
+  wooded <- terra::resample(wooded, veg_coverage)
 }
 
 if(class(veg_structure) == "SpatVector"){ #if from lulc
-  veg_r <- project(veg_structure, veg_coverage)
-  veg_r <- rasterize(veg_r, veg_coverage, field="CUGIC_height") #might need to be flipped?
+  veg_r <- terra::project(veg_structure, veg_coverage)
+  veg_r <- terra::rasterize(veg_r, veg_coverage, field="CUGIC_height") #might need to be flipped?
   
   #individual maps
   grass <- veg_r == "grass"
@@ -119,7 +119,7 @@ cugic_fun <- function(cover, grass, shrub, wooded) {
 }
 
 #run the function
-cugic <- lapp(veg_stack, fun = cugic_fun)
+cugic <- terra::lapp(veg_stack, fun = cugic_fun)
 levels(cugic) <- lookuptable_veg_struc
 names(cugic) <- "veg_struc_"
 
@@ -138,10 +138,10 @@ if(is.null(alternative_lookup)){
 lulc$CUGIC_classes <- lookup$new[match(lulc$lulc, lookup$old)]
 
 cugic_class_vect <- lulc["CUGIC_classes"]
-cugic_class_vect <- project(cugic_class_vect, veg_coverage)
-cugic_class_raster <- rasterize(cugic_class_vect, veg_coverage, field="CUGIC_classes")
+cugic_class_vect <- terra::project(cugic_class_vect, veg_coverage)
+cugic_class_raster <- terra::rasterize(cugic_class_vect, veg_coverage, field="CUGIC_classes")
 
-cugic <- c(cugic, cugic_class_raster)
+cugic <- terra::c(cugic, cugic_class_raster)
 names(cugic) <- paste0(names(cugic), year)
 
 #save the raster

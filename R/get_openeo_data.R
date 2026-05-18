@@ -55,19 +55,19 @@ if(is.null(pre_download_check_result)){
   
   
   # 1. Conditional connection to Copernicus Data Space Ecosystem (CDSE)
-  if(is.null(active_connection())){
-                                  con = connect(host = "https://openeo.dataspace.copernicus.eu")}
-  if(is.null(list_jobs())){ #if we can access jobs, assume we need to login
-                          login()} 
+  if(is.null(openeo::active_connection())){
+                                  con = openeo::connect(host = "https://openeo.dataspace.copernicus.eu")}
+  if(is.null(openeo::list_jobs())){ #if we can access jobs, assume we need to login
+                          openeo::login()} 
   Sys.sleep(5) #for robustness?
   
-  if(is.null(active_process_collection())){
-                                          p = processes()} #functions to be used
-  if(!exists("p")){p = processes()}
+  if(is.null(openeo::active_process_collection())){
+                                          p = openeo::processes()} #functions to be used
+  if(!exists("p")){p = openeo::processes()}
   print("Logged in and connected")
   
   # 1.5 Get the bbox
-  aoi <- st_bbox(aoi)
+  aoi <- sf::st_bbox(aoi)
   
   print("Set bounding box")
   
@@ -194,7 +194,7 @@ if(is.null(pre_download_check_result)){
       result = p$save_result(data = data,
                              format = "GTiff",
                              options = list(datatype = "float32"))
-      compute_result(result,
+      openeo::compute_result(result,
                      output_file = paste0("./MUST_downloaded_data/",city_name,"/",startdate,"_",enddate,"_",satellite,"_",indicator,"_",method,"_raw.tif"))
       
       #add to the attemptcounter
@@ -211,11 +211,11 @@ if(is.null(pre_download_check_result)){
   cat("Data saved now pulling in R environment")
   resultingRast <- terra::rast(paste0("MUST_downloaded_data/",city_name,"/",startdate,"_",enddate,"_",satellite,"_",indicator,"_",method,"_raw.tif"))
   
-  if(indicator %in% c("NDVI", "NDWI","MSAVI", "EVI")){resultingRast <- clamp(resultingRast, lower = -1, upper = 1, values = F)} #values above 1 are urnealistic
+  if(indicator %in% c("NDVI", "NDWI","MSAVI", "EVI")){resultingRast <- terra::clamp(resultingRast, lower = -1, upper = 1, values = F)} #values above 1 are urnealistic
 
   terra::writeRaster(resultingRast, filename = paste0("MUST_downloaded_data/",city_name,"/",startdate,"_",enddate,"_",satellite,"_",indicator,"_",method,".tif"),
               overwrite = T)
-  resultingRaster <- rast(paste0("MUST_downloaded_data/",city_name,"/",startdate,"_",enddate,"_",satellite,"_",indicator,"_",method,".tif"))
+  resultingRaster <- terra::rast(paste0("MUST_downloaded_data/",city_name,"/",startdate,"_",enddate,"_",satellite,"_",indicator,"_",method,".tif"))
   #return object
   return(resultingRast)
   unlink(paste0("MUST_downloaded_data/",city_name,"/",startdate,"_",enddate,"_",satellite,"_",indicator,"_",method,"_raw.tif"))

@@ -29,8 +29,8 @@ startdate <- "2017-01-01"
 for(timestep in 0:7) { #2025 currently, but should scale in future automatically
 
   #start and end time
-  startdate_time <- as.character(as.POSIXct(startdate)+years(timestep))
-  enddate_time <- as.character(as.POSIXct(startdate)+years(timestep+1))
+  startdate_time <- as.character(as.POSIXct(startdate)+lubridate::years(timestep))
+  enddate_time <- as.character(as.POSIXct(startdate)+lubridate::years(timestep+1))
     
   #request municipal border
   print(paste0("Retrieving municipal border for ",city_name, " in year ", startdate_time))
@@ -70,7 +70,7 @@ for(timestep in 0:7) { #2025 currently, but should scale in future automatically
       
       #get veg structure data
       print(paste0("Calculcating vegetation structure ",city_name, " in year ", startdate_time))
-      if(str_detect(city_name, "Netherland") & AHN == T){
+      if(stringr::str_detect(city_name, "Netherland") & AHN == T){
         get_data_ahn(city_name = city_name,#this only works for the netherlands
                      date = startdate_time)}else{veg_structure_via_lulc(lulc)}
       

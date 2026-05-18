@@ -13,8 +13,8 @@
 build_dhm <- function(dtm, dsm) {
 
   #resample if needed
-  if (!compareGeom(dtm, dsm, stopOnError = FALSE)) { 
-    dsm <- resample(dsm, dtm, method = "bilinear")
+  if (!terra::compareGeom(dtm, dsm, stopOnError = FALSE)) { 
+    dsm <- terra::resample(dsm, dtm, method = "bilinear")
   }
   
   # Interpoleer NAs in DTM

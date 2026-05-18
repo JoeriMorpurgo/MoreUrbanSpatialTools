@@ -25,16 +25,16 @@ make_cugic <- function(ndvi_stack, ndvi_layer_index = 1, classified_height,
   ndvi_max <- ndvi_raster@pntr@.xData$range_max
   ndvi_raster[ndvi_raster > ndvi_max] <- NA #nonsense but okay...
   ndvi_raster[ndvi_raster < ndvi_min] <- NA
-  fcv <- app(ndvi_raster, fun=function(x){((x-ndvi_min)/(ndvi_max-ndvi_min))})
+  fcv <- terra::app(ndvi_raster, fun=function(x){((x-ndvi_min)/(ndvi_max-ndvi_min))})
   
   #Make save if requested
-  if (!is.null(out_fcv)) writeRaster(fcv, out_fcv, overwrite = TRUE)
+  if (!is.null(out_fcv)) terra::writeRaster(fcv, out_fcv, overwrite = TRUE)
   
   
   #Combing NDVI and height data
   cat("Step 3/4: Preparing CUGIC classification...\n")
-  CUGICveg <- c(fcv, classified_height)
-  CUGICveg <- c(CUGICveg, CUGICveg[[1]]) #Create dummy raster
+  CUGICveg <- terra::c(fcv, classified_height)
+  CUGICveg <- terra::c(CUGICveg, CUGICveg[[1]]) #Create dummy raster
   CUGICveg[[5]][] <- NA #Empty the dummy
   names(CUGICveg[[5]]) <- "CUGIC"
   
@@ -50,52 +50,52 @@ make_cugic <- function(ndvi_stack, ndvi_layer_index = 1, classified_height,
   
   gc(full = T)
   #ifel would be better, but lazy...
-  CUGICveg[[5]] <- ifel(h1 >= 0.1 & h2 >= 0.1 & h3 >= 0.1, #mixed
-                          ifel(d > 0.7, 28,
-                          ifel(d >= 0.5, 27,
-                          ifel(d >= 0.1, 26,
-                          ifel(d > 0, 25, NA)))),
+  CUGICveg[[5]] <- terra::ifel(h1 >= 0.1 & h2 >= 0.1 & h3 >= 0.1, #mixed
+                               terra::ifel(d > 0.7, 28,
+                                           terra::ifel(d >= 0.5, 27,
+                                                       terra::ifel(d >= 0.1, 26,
+                                                                   terra::ifel(d > 0, 25, NA)))),
                         
-                        ifel(h2 >= 0.1 & h3 >= 0.1, #shrub tree
-                            ifel(d > 0.7, 24,
-                            ifel(d >= 0.5, 23,
-                            ifel(d >= 0.1, 22,
-                            ifel(d > 0, 21, NA)))),
+                               terra::ifel(h2 >= 0.1 & h3 >= 0.1, #shrub tree
+                                           terra::ifel(d > 0.7, 24,
+                                                       terra::ifel(d >= 0.5, 23,
+                                                                   terra::ifel(d >= 0.1, 22,
+                                                                               terra::ifel(d > 0, 21, NA)))),
                             
-                        ifel(h1 >= 0.1 & h3 >= 0.1, #grass tree
-                            ifel(d > 0.7, 20,
-                            ifel(d >= 0.5, 19,
-                            ifel(d >= 0.1, 18,
-                            ifel(d > 0, 17, NA)))),
+                                           terra::ifel(h1 >= 0.1 & h3 >= 0.1, #grass tree
+                                                       terra::ifel(d > 0.7, 20,
+                                                                   terra::ifel(d >= 0.5, 19,
+                                                                               terra::ifel(d >= 0.1, 18,
+                                                                                           terra::ifel(d > 0, 17, NA)))),
                             
                             
-                        ifel(h1 >= 0.1 & h2 >= 0.1, #grass shrub
-                            ifel(d > 0.7, 16,
-                            ifel(d >= 0.5, 15,
-                            ifel(d >= 0.1, 14,
-                            ifel(d > 0, 13, NA)))),
+                                                       terra::ifel(h1 >= 0.1 & h2 >= 0.1, #grass shrub
+                                                                   terra::ifel(d > 0.7, 16,
+                                                                               terra::ifel(d >= 0.5, 15,
+                                                                                           terra::ifel(d >= 0.1, 14,
+                                                                                                       terra::ifel(d > 0, 13, NA)))),
                             
-                        ifel(h1 > 0, #grass
-                            ifel(d > 0.7, 4,
-                            ifel(d >= 0.5, 3,
-                            ifel(d >= 0.1, 2,
-                            ifel(d > 0, 1, NA)))),
+                                                                   terra::ifel(h1 > 0, #grass
+                                                                               terra::ifel(d > 0.7, 4,
+                                                                                           terra::ifel(d >= 0.5, 3,
+                                                                                                       terra::ifel(d >= 0.1, 2,
+                                                                                                                   terra::ifel(d > 0, 1, NA)))),
                             
-                        ifel(h2 > 0, #shrub
-                            ifel(d > 0.7, 8,
-                            ifel(d >= 0.5, 7,
-                            ifel(d >= 0.1, 6,
-                            ifel(d > 0, 5, NA)))),
+                                                                               terra::ifel(h2 > 0, #shrub
+                                                                                           terra::ifel(d > 0.7, 8,
+                                                                                                       terra::ifel(d >= 0.5, 7,
+                                                                                                                   terra::ifel(d >= 0.1, 6,
+                                                                                                                               terra::ifel(d > 0, 5, NA)))),
                             
-                        ifel(h3 > 0,  #tree
-                            ifel(d > 0.7, 12,
-                            ifel(d >= 0.5, 11,
-                            ifel(d >= 0.1, 10,
-                            ifel(d > 0, 9, NA)))),
+                                                                                           terra::ifel(h3 > 0,  #tree
+                                                                                                       terra::ifel(d > 0.7, 12,
+                                                                                                                   terra::ifel(d >= 0.5, 11,
+                                                                                                                               terra::ifel(d >= 0.1, 10,
+                                                                                                                                           terra::ifel(d > 0, 9, NA)))),
                 NA
               )))))))
   
-  if (!is.null(out_cugic)) writeRaster(CUGICveg[[5]], out_cugic, overwrite = TRUE)
+  if (!is.null(out_cugic)) terra::writeRaster(CUGICveg[[5]], out_cugic, overwrite = TRUE)
   
   cat("Processing complete.\n")
   return(list(fcv = fcv, cugic = CUGICveg[[5]]))

@@ -13,7 +13,7 @@
 
 test_osm_cityname_query <- function(cities, map = F){ #for geocoder.
 
-result <- geo(cities, method = "osm", full_results = T)
+result <- tidygeocoder::geo(cities, method = "osm", full_results = T)
   
 
 

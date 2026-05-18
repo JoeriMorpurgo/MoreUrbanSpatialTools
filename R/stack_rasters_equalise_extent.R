@@ -17,27 +17,27 @@ stack_rasters_equalise_extent <- function(rasterFiles) {
   rasters <- lapply(rasterFiles, rast)
   
   # Check that CRS are the same
-  crs_list <- sapply(rasters, crs)
-  if (length(unique(crs_list)) > 1) {
+  crs_list <- sapply(rasters, terra::crs)
+  if (length(terra::unique(crs_list)) > 1) {
     stop("Not all rasters have the same CRS.")
   }
   
   # Find the largest extent
-  all_extents <- lapply(rasters, ext)
-  combined_extent <- Reduce(union, all_extents)
+  all_extents <- lapply(rasters, terra::ext)
+  combined_extent <- Reduce(terra::union, all_extents)
   
   # Pad each raster to match the largest extent
   padded_rasters <- lapply(rasters, function(r) {
-    ext_r <- ext(r)
+    ext_r <- terra::ext(r)
     if (!ext_r == combined_extent) {
-      extend(r, combined_extent)
+      terra::extend(r, combined_extent)
     } else {
       r
     }
   })
   
   # Stack the padded rasters
-  raster_stack <- rast(padded_rasters)
+  raster_stack <- terra::rast(padded_rasters)
   return(raster_stack)
   
 }

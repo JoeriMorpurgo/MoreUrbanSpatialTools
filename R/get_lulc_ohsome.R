@@ -55,7 +55,7 @@ if(is.null(pre_download_check_result)){ #No LULC object found
   time_str <- sprintf(date)
   
   # define API query
-  query_lulc_sf <- ohsome_elements_geometry(
+  query_lulc_sf <- ohsome::ohsome_elements_geometry(
     boundary = bbox_vals,
     time = time_str,
     filter = filter_str,
@@ -74,20 +74,20 @@ if(is.null(pre_download_check_result)){ #No LULC object found
   cat("Received Ohsome data")
   
   #Fix the geometries
-  lulc_sf <- st_make_valid(lulc_sf) #first fix
-  lulc_sf_poly <- lulc_sf[st_geometry_type(lulc_sf) %in% c("POLYGON", "MULTIPOLYGON"), ] #omit points
-  lulc_sf_poly <- lulc_sf_poly[st_is_valid(lulc_sf_poly),] #Hard check
-  if(is.character(aoi)){aoi <- st_make_valid(bbox_vals)} else {aoi <- st_make_valid(aoi)} #if the input was character use the bbox to make valid
+  lulc_sf <- sf::st_make_valid(lulc_sf) #first fix
+  lulc_sf_poly <- lulc_sf[sf::st_geometry_type(lulc_sf) %in% c("POLYGON", "MULTIPOLYGON"), ] #omit points
+  lulc_sf_poly <- lulc_sf_poly[sf::st_is_valid(lulc_sf_poly),] #Hard check
+  if(is.character(aoi)){aoi <- sf::st_make_valid(bbox_vals)} else {aoi <- sf::st_make_valid(aoi)} #if the input was character use the bbox to make valid
   
   
   #mask the retrieved LULC to the AOI
   cat("masking ohsome lulc to border")
-  lulc_sf_masked <- st_intersection(lulc_sf_poly, aoi)
+  lulc_sf_masked <- sf::st_intersection(lulc_sf_poly, aoi)
   
   #omitting columns that are "extra"
-  subsetNames <- unique(lulc_info[[1]])[unique(lulc_info[[1]]) %in% colnames(lulc_sf_masked)]
+  subsetNames <- base::unique(lulc_info[[1]])[base::unique(lulc_info[[1]]) %in% colnames(lulc_sf_masked)]
   lulc_sf_masked <- lulc_sf_masked[subsetNames] #reduce to what has been requested in the start
-  lulc_vect_masked <- vect(lulc_sf_masked) #to use writeVector, which seems much quicker than st_write?
+  lulc_vect_masked <- terra::vect(lulc_sf_masked) #to use writeVector, which seems much quicker than st_write?
   #OKay about 100x faster atleast.
   
   #coalesce LULC
@@ -99,7 +99,7 @@ if(is.null(pre_download_check_result)){ #No LULC object found
   #remove double columns
   lulc_vect_masked <- lulc_vect_masked["lulc"]
   
-  writeVector(lulc_vect_masked, 
+  terra::writeVector(lulc_vect_masked, 
               file = paste0("MUST_downloaded_data/",city_name,"/lulc",year,".gpkg"))
   
   

@@ -17,7 +17,7 @@ get_data_ahn <- function(date, city_name) {
   options(timeout = max(900, getOption("timeout")))
   
   #year to version
-  year <- str_extract(date, "\\d{4}")
+  year <- stringr::str_extract(date, "\\d{4}")
   if(year %in% c(2024:2026)){version <- "AHN5"}
   if(year %in% c(2020:2023)){version <- "AHN4"}
   if(year %in% c(2014:2019)){version <- "AHN3"}
@@ -28,10 +28,10 @@ pre_download_check_result <- pre_download_check(city_name = city_name,
 if(is.null(pre_download_check_result)){ #if there is no file already, run the code.
   
   #get names of the squares to download
-  ahn_sheets <- ahn_sheets_info(AHN = "AHN4", dem = "DSM", resolution = "0.5") #shouldn't matter to much as names don't change
+  ahn_sheets <- rAHNextract::ahn_sheets_info(AHN = "AHN4", dem = "DSM", resolution = "0.5") #shouldn't matter to much as names don't change
   bbox <- get_municipal_bbox(city_name)
-  bbox <- sf::st_transform(bbox, st_crs(ahn_sheets))
-  sheets <- ahn_sheets[st_intersects(ahn_sheets, bbox, sparse = FALSE), ]
+  bbox <- sf::st_transform(bbox, sf::st_crs(ahn_sheets))
+  sheets <- ahn_sheets[sf::st_intersects(ahn_sheets, bbox, sparse = FALSE), ]
   kaartbladen  <- sheets$kaartbladNr  #what we need to download.
   
 
@@ -50,10 +50,10 @@ if(is.null(pre_download_check_result)){ #if there is no file already, run the co
     
     
     #get names of the squares to download
-    ahn_sheets <- ahn_sheets_info("AHN4", dem = "DSM", resolution = "0.5")
+    ahn_sheets <- rAHNextract::ahn_sheets_info("AHN4", dem = "DSM", resolution = "0.5")
     bbox <- get_municipal_bbox(city_name)
-    bbox <- sf::st_transform(bbox, st_crs(ahn_sheets))
-    sheets <- ahn_sheets[st_intersects(ahn_sheets, bbox, sparse = FALSE), ]
+    bbox <- sf::st_transform(bbox, sf::st_crs(ahn_sheets))
+    sheets <- ahn_sheets[sf::st_intersects(ahn_sheets, bbox, sparse = FALSE), ]
     kaartbladen  <- sheets$kaartbladNr  
     
     for (blad in kaartbladen) {
@@ -73,22 +73,22 @@ if(is.null(pre_download_check_result)){ #if there is no file already, run the co
       
       # Output directory
       outdir <- file.path(paste0("MUST_downloaded_data/",city_name,"/AHN"))
-      dir_create(outdir)
+      xfun::dir_create(outdir)
       
       # Bestemmingspad
       destfile <- file.path(outdir, paste0(version,is_dsm,blad,".zip"))
       
       # Check of bestand of uitgepakt map al bestaat
       unzip_dir <- file.path(outdir, paste0(version,is_dsm,blad))
-      if (file_exists(destfile) || (dir_exists(unzip_dir))) {
+      if (xfun::file_exists(destfile) || (xfun::dir_exists(unzip_dir))) {
         cat("Bestaat al of al uitgepakt:", destfile, "\n")
         return()
       }
       
       # Download
-      download.file(url, destfile = destfile)
+      utils::download.file(url, destfile = destfile)
       cat("Gedownload:", destfile, "\n")
-      unzip(destfile, exdir = unzip_dir) #unzip
+      utils::unzip(destfile, exdir = unzip_dir) #unzip
       cat("Uitgepakt naar:", unzip_dir, "\n")
       file.remove(destfile)             #remove
       cat("ZIP verwijderd:", destfile, "\n")
@@ -108,7 +108,7 @@ if(is.null(pre_download_check_result)){ #if there is no file already, run the co
   #go through them to build the dhm
   for (i in seq(length(dtm_dirs))) {
     
-    bladName <- str_extract(dtm_dirs[i], "(?<=FALSE).*")
+    bladName <- stringr::str_extract(dtm_dirs[i], "(?<=FALSE).*")
     
     #building the dhm
     dhm <- build_dhm(dtm = rast(list.files(dtm_dirs[i], full.names = T)),
@@ -126,7 +126,7 @@ if(is.null(pre_download_check_result)){ #if there is no file already, run the co
   }
   
   #retrieve all .tifs in the folder and combine them into a big Geotiff to retrieve upon request
-  dhm_tot <- vrt(list.files(paste0("MUST_downloaded_data/",city_name,"/AHN/"), pattern = ".tif", full.names = T))
+  dhm_tot <- terra::vrt(list.files(paste0("MUST_downloaded_data/",city_name,"/AHN/"), pattern = ".tif", full.names = T))
   
   #save the stack for later.
   terra::writeRaster(dhm_tot, file = paste0("MUST_downloaded_data/",city_name,"/",version,"_dhm.tif"))
