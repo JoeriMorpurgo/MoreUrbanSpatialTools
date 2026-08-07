@@ -8,31 +8,40 @@
 #' PLACEHOLDER()
 #' 
 #' 
-pre_download_check <- function(city_name, object){
+pre_download_check <- function(city_name,
+                               object,
+                               indicator = NULL){
   
-  #check if a MUST folder has been made
+  ##check if a MUST folder has been made
   if(!("./MUST_downloaded_data" %in% list.dirs())){
-    #To let user know
     print(paste0("No MUST download folder found. Will create new folder for downloads at ", getwd(),"/MUST_downloaded_data"))
-    
-    #create folder
-    dir.create("MUST_downloaded_data")
+    dir.create("MUST_downloaded_data") #create folder if no folder
+    }
+
+  
+  ##Check if the city had requests before
+  city_path <- file.path("./MUST_downloaded_data/",city_name)
+  if(!dir.exists(city_path)){
+    print(paste0("No folder found for ", city_name, " making one at ", getwd(), "/MUST_downloaded_data/",city_name))
+    dir.create(city_path)
     }
   
-  #Check if the city had requests before
-  if(!(city_name %in% list.dirs("MUST_downloaded_data/", full.names = F, recursive = F))){
-    #let the user know
-    print(paste0("No folder found for ", city_name, " making one in the ", getwd(),"/MUST_downloaded_data"))
-    
-    #create folder
-    dir.create(paste0("MUST_downloaded_data/",city_name))
+  #check if subfolder for indicator exists
+  target_dir <- city_path
+  if(!is.null(indicator)){
+    target_dir <- file.path("./MUST_downloaded_data/",city_name,"/",indicator)
+    if(!dir.exists(target_dir)){
+      print(paste0("Creating indicator subfolder at ",target_dir))
+      dir.create(target_dir)
+    }
   }
   
-  #Check if the object/file is already present. This means we can skip API req.
-  objectPath <- list.files(paste0("MUST_downloaded_data/",city_name),
-                       pattern = object, full.names = T)
   
-  #If the object is not found
+  ##Check if the object/file is already present. This means we can skip API req.
+  objectPath <- list.files(target_dir, pattern = object, full.names = T)
+  
+  
+  ##If the object is not found
   if(length(objectPath) == 0){
     print(paste0("The ", object, " is not found. Will start data request."))
     return(NULL)
@@ -44,6 +53,7 @@ pre_download_check <- function(city_name, object){
     if("tif" %in% xfun::file_ext(objectPath)){retrievedObject <- terra::rast(objectPath[grepl("\\.tif$", objectPath)])}
     if("gpkg" %in% xfun::file_ext(objectPath)){retrievedObject <- terra::vect(objectPath)}
     if("" %in% xfun::file_ext(objectPath)){retrievedObject <- base::readRDS(objectPath)}
+    if("nc" %in% xfun::file_ext(objectPath)){retrievedObject <- terra::rast(objectPath[grepl("\\.nc$", objectPath)])}
     
     return(retrievedObject)
   }
@@ -55,6 +65,7 @@ pre_download_check <- function(city_name, object){
     if(xfun::file_ext(objectPath) == "tif"){retrievedObject <- terra::rast(objectPath)}
     if(xfun::file_ext(objectPath) == "gpkg"){retrievedObject <- terra::vect(objectPath)}
     if(xfun::file_ext(objectPath) == ""| xfun::file_ext(objectPath) == "rds"){retrievedObject <- base::readRDS(objectPath)}
+    if(xfun::file_ext(objectPath) == "nc"){retrievedObject <- terra::rast(objectPath)}
     
     return(retrievedObject)
   }

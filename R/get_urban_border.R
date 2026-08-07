@@ -1,168 +1,104 @@
-#' Calculate urban border
+#' Define urban border
 #'
-#' This function retrieves the municipal border and land-uses from OpenStreetMaps. After it transforms the land-use polygons into points
-#' every 100m^2. These points are put in the DBSCAN algorithm to cluster points. After all clusters in the largest 90% are considered urban.
-#' Finally, a concave hull is drawn around the remaining urban points which represents an estimate of the urban area of interest (AOI)
+#' This function take the LULC file, creates a binary raster of urban environment through excluding green LULC. After it fill gaps between urban cell up to 1km and then define the urban border as 50% of space having a urban LULC in either (default) 500m, 300m or 1000m moving window. NOTE: 1000m will be slow, and can crash, for larger cities.
 #' NOTE: 
 #' Literature: 
-#' @param city_name character value. Name of a city
-#' @param interactive TRUE or FALSE. Allows user to selct municipal borders through Mapview. This is not recommended, but can help with problems if this function returns borders for the wrong city.
-#' @param historic TRUE or FALSE. Whether to retrieve current data from OpenStreetMaps or Ohsome for historic data
+#' @param city_name character value. Name of a city. This should correspond exactly to the name used in other functions of the package.
 #' @param date character value. Which date/time to retrieve the snapshot from Ohsome
-#' @param dbscan TRUE or FALSE. Use Density-based spatial clustering of applications with noise (DBSCAN) to find urban clusters.
-#' @param eps Distance to be considered
-#' @param minPts Minimum points for consideration of cluster
-#' @param plot legacy. Can be set to TRUE
-#' @keywords urban, border, DBSCAN
+#' @param bufferSize numeric value. Defaults to 500. Either, or combination, of 300, 500 or 1000. These indicate meters size of the moving average window to define urban border.
+#' @param LULC .tif. Map from Terra having LULC. The following LULC cats are recoginized as non-urban c("agriculture", "water", "river", "canal", "stream", "sea", "natural", "Green buffer zones").
+#' @param save FALSE or path. Where to save the define urban border. Defaults to T to save border in the standard folder. F to no save. define path (character) to  place to in particular folder.
+#' @keywords urban, border
 #' @export
 #' @examples
 #' PLACEHOLDER()
 #' 
 
 ####################### get_urban_aoi #####################
-get_urban_border <- function(city_name,
-                              historic = F,
+get_urban_border <- function(city_name = NULL,
                               date = NULL,
-                              eps = 1000, #1000m
-                              minPts = 100 #Approx 50% should be built up.
+                              bufferSize = NULL,
+                              LULC = NULL, #user provided LULC
+                              save = T
                               ){
 
 #date to year  transformation
-dateYear <- year(as.POSIXct(date))  
+if(is.character(date)){dateYear <- lubridate::year(as.POSIXct(date))}else{dateYear <- date}
   
 #Check if we already have this data downloaded
+if(is.character(city_name) & is.character(date)){
 pre_download_check_result <- pre_download_check(city_name = city_name,
-                                                object = paste0("urban_border_",dateYear))
+                                                object = paste0("urban_border_",dateYear))} else (pre_download_check_result <- NULL)
 if(is.null(pre_download_check_result)){ #if there is no file already, run the code.
   
     
-  ##Find the municipal border to define the AOI
-  cat("Getting municipal borders")
-  municipal_aoi <- MUST::get_municipal_border(city_name)
-  municipal_aoi <- sf::st_make_valid(municipal_aoi)
-  Sys.sleep(1)
+  ##Retrieve the LULC and reproject
+  if(is.null(LULC)){LULC <- terra::vect(paste0(getwd(),"/MUST_downloaded_data/",city_name,"/lulc",dateYear,".gpkg"))} #retrieve
+  LULC <- project_to_local_utm(LULC)
   
-  ##Retrieve the LULC
-      # if(historic){
-        
-        message("Creating Ohsome boundary")
-        municipal_aoi_wip <- sf::st_simplify(municipal_aoi, dTolerance = 0.1, preserveTopology = TRUE)
-        municipal_aoi_wip <- sf::st_make_valid(municipal_aoi_wip)
-        aoi <- ohsome::ohsome_boundary(municipal_aoi_wip)
-        
-        message("Requesting historic Ohsome data")
-        query <- ohsome::ohsome_elements_geometry(
-          boundary = aoi,  
-          filter = paste(
-            "landuse=residential or",
-            "landuse=commercial or",
-            "landuse=construction or",
-            "landuse=industrial or",
-            "landuse=retail"
-          ),
-          time = date,
-          properties = "tags",
-          clipGeometry = TRUE)
-        AOI <- ohsome::ohsome_post(query) #Send request
-        
-        #fix receieved qeury
-        AOI <- AOI[sf::st_geometry_type(AOI) %in% c("POLYGON", "MULTIPOLYGON"), ]
-        AOI <- sf::st_cast(AOI, "MULTIPOLYGON")
-        AOI <- sf::st_make_valid(AOI)
-        message("Retrieved historic Ohsome data for ", city_name)
-        
-      # }
-      # else
-      # {
-      #   #Transform it to a poly bbox for OSM opq
-      #   cat("Prepping polygon bbox for overpass API query")
-      #   municipal_aoi_poly_bbox <- as.matrix(unclass(st_geometry(municipal_aoi))[[1]])
-      #   
-      #   #Request OSM data
-      #   message("Requesting OSM LULC data")
-      #   AOI <- opq(bbox = municipal_aoi_poly_bbox) %>%
-      #     add_osm_features(features = c(
-      #       "\"landuse\"~\"residential|commercial|construction|industrial|retail\""
-      #     )) %>%
-      #     osmdata_sf()
-      #   message("Retrieved the OSM LULC data for ", city_name)
-      #   
-      #   #Prep the AOI
-      #   AOI <- merge_osm_polygons(AOI) #Merge multipoly and poly together
-      #   AOI <- st_make_valid(AOI)
-      #   
-      # }
+  #Define all non-urban LULC and remove them.
+  nonUrban <- lulc_info$Value[lulc_info$Simplified_CUGIC_class %in% c("agriculture", "water", "river", "canal", "stream", "sea", "natural", "Green buffer zones")]
+  urbanLULC <- LULC[!c(LULC$lulc %in% nonUrban)]
   
-  ##Define urban border
-  #Hardcore omit bad geometry.... Shouldn've been fixed already.
-  AOI <- AOI[which(sf::st_is_valid(AOI)),]
-  municipal_aoi <- municipal_aoi[which(sf::st_is_valid(municipal_aoi)),]
+  #template raster and rasterisation of the urbanLULC
+  template <- terra::rast(urbanLULC)
+  terra::res(template) <- 10 #this should be approx 1m
+  urbanLULCrast <- terra::rasterize(urbanLULC, template,
+                   field = 1,
+                   background = 0)
+    
+  #moving window 50% of 1km as urban
+  ##check user input
+  if (is.null(bufferSize)){bufferSize <- 500}
   
-  #Somee stuff
-  AOI <- suppressWarnings(sf::st_intersection(AOI, municipal_aoi))
-  AOI <- sf::st_make_valid(AOI)
+  #lookup table
+  input_meters <- c(300, 500, 1000)
+  output_cells <- c(31,  51, 101)
+  windowSize <- output_cells[match(bufferSize, input_meters)]
   
+  #running the moving window
+  for(q in windowSize){
   
-  #DBscan 
-    set.seed(0)
-    message("Using DBscan to define urban border")
-    AOI <- AOI[!st_is_empty(AOI),]
+    #closing small gaps
+    w_close <- focalMat(urbanLULCrast, d = 101, type = "circle") #weighted focal matrix
+    w_close <- ifelse(w_close > 0, 1, NA) #binary matrix
+    dilated <- focal(urbanLULCrast, w = w_close, fun = "max", na.rm = T)
+    closed <- focal(dilated, w = w_close, fun = "min", na.rm = T)
     
-    #Estimate cell size for raster via area of shapefile
-    extentInMeters <- terra::ext(sf::st_transform(AOI, 3857)) # grab the extent
-    xMeters <- as.numeric(abs(extentInMeters[1] - extentInMeters[2])) #x in meters
-    yMeters <- as.numeric(abs(extentInMeters[3] - extentInMeters[4])) #y in meters
-    
-    #LULC to points for DBSCAN
-    templateRaster <- raster::raster(AOI,
-                             nrows = xMeters/100, ncols = yMeters/100) #1 point per 10000m2
-    raster <- fasterize::fasterize(AOI, templateRaster)
-    points <- raster::rasterToPoints(raster, spatial = T)
-    points <- sf::st_as_sf(points)
-    points <- sf::st_transform(points, 3857)
-    coords <- as.data.frame(sf::st_coordinates(points))
-    
-    #DBSCAN
-    message("Assigning clusters based on density")
-    clusters <- dbscan::dbscan(coords, eps = eps, #1000 meters to consider
-                               minPts = minPts) #100 is fully built area, given 1pts/ha
-    points$clusterdb <- clusters$cluster
-
-    
-    #filter to right clusters
-    points <- points %>%
-      dplyr::group_by(clusterdb) %>%
-      dplyr::count() %>%
-      dplyr::filter(clusterdb != 0) #omit non-clusters 
-
-    
-    aoi_list <- list() #to save subAOIs
-    for (i in seq(length(unique(points$clusterdb)))) {
-      
-      #Make AOI concave
-      con_aoi <- sf::st_convex_hull(points$geometry[points$clusterdb==i]
-                                #, ratio = 0.75
-                                )
-      con_aoi <- sf::st_transform(con_aoi, 4326)
-      
-      #save it to join later
-      aoi_list[[i]] <- con_aoi
-      rm(con_aoi)
-    }
-    AOI_merged <- do.call(c, aoi_list)
-    AOI_merged <- sf::st_sf(clusters = seq(1:length(AOI_merged)), geometry = AOI_merged)
-    #plot(AOI_merged, main = "almere 2025 convex")
-    
-    AOI <- sf::st_intersection(AOI_merged, municipal_aoi) #Remove extra area sometime generated by concave
-    message("DBSCAN succesful")
+    #moving window
+    urbanBorder <- terra::focal(closed, w = q, 
+                              fun = "mean", expand = T)
   
+    #from numerical to binary
+    urbanBorder <- urbanBorder>0.5 #half needs to be considered urban in a km
+    urbanBorder <- urbanBorder*1 #from T/F to binary. This helps with other functions.
+    urbanBorder[urbanBorder==0] <- NA #omit 0 from the rasters
+  
+      #for name to save object
+      name <- input_meters[match(q,output_cells)]
+      names(urbanBorder) <- name
+      #save object
+      assign(paste0("urbanBorderVect",name),
+             as.polygons(urbanBorder))#from raster to border vector
+  }
+  
+  #put in 1 file
+  urbanBorderVect <- vect(c(mget(ls()[grep("urbanBorderVect",ls())])))
+  
+  #name for saving object
+  fileWindowName <- stringr::str_flatten(as.character(bufferSize))
 
   #save the urban_border
-  base::saveRDS(AOI,
-          file = paste0("MUST_downloaded_data/",city_name,"/urban_border_",dateYear))
+  if(save){
+    dir.create(paste0(getwd(),"/MUST_downloaded_data/",city_name,"/borders/urban/"), showWarnings = F, recursive = T) #to make the directory
   
-  #Return the shapefile
-  return(AOI) 
+    terra::writeVector(urbanBorderVect, file = paste0(getwd(),"/MUST_downloaded_data/",city_name,"/borders/urban/urban_",fileWindowName,"border_",dateYear,".gpkg"),
+                     overwrite = T)
+  }
+  if(is.character(save)){terra::writeVector(urbanBorderVect, file = path, overwrite = T)}
+  
+  #Return the vector
+  return(urbanBorderVect) 
 }
   else
   {

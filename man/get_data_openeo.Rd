@@ -12,7 +12,7 @@ get_data_openeo(
   satellite,
   indicator,
   method,
-  cloud_threshold = 50
+  cloud_threshold = 80
 )
 }
 \arguments{
@@ -20,15 +20,15 @@ get_data_openeo(
 
 \item{city_name}{character. Name of the city for the data retrieval}
 
-\item{indicator}{Character value; NDV (future; EVI or LST)}
+\item{startdate}{date. Start of the requesting images}
 
-\item{method}{Character value. Max or Mediam}
+\item{enddate}{date. End of the requesting images}
+
+\item{indicator}{Character value; NDVI (future; EVI or LST)}
+
+\item{method}{Character value. max, 90th, median, monthly_max, monthly_90th, monthly_median or none (for all images). 90th indicates the 90th percentile of a pixel value over the time period. Note: none will retrieve massive amounts of images.}
 
 \item{cloud_threshold}{numeric. Standard at 50.}
-
-\item{start_date}{date. Start of the requesting images}
-
-\item{end_date}{date. End of the requesting images}
 
 \item{sattelite}{character value. Sentinel or (future; Landsat)}
 }

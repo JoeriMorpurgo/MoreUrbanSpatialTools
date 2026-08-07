@@ -4,7 +4,7 @@
 \alias{pre_download_check}
 \title{Checks if files are in cache and retrieves if ther}
 \usage{
-pre_download_check(city_name, object)
+pre_download_check(city_name, object, indicator = NULL)
 }
 \arguments{
 \item{city_name}{folder it will look for}

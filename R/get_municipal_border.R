@@ -18,7 +18,7 @@ get_municipal_border <- function(city_name,
                                  date = NULL) {
 
 #date to year  transformation
-dateYear <- year(as.POSIXct(date))
+dateYear <- lubridate::year(as.POSIXct(date))
     
 #Check if we already have this data downloaded
 pre_download_check_result <- pre_download_check(city_name = city_name,
@@ -46,11 +46,11 @@ if(is.null(pre_download_check_result)){ #if there is no file already, run the co
                     filter = paste0("boundary=administrative and admin_level=",level), 
                     time = date,
                     properties = "tags", 
-                    clipGeometry = T)
+                    clipGeometry = F)
                   
                     #Send request
-                    message("querying municipal borders")
-                    res <- ohsome::ohsome_post(query) 
+                    message("querying OHSOME for municipal borders")
+                    res <- ohsome::ohsome_post(query, validate = T, strict = T) 
                     
                     #check if we have a result
                     if(nrow(res)>0){break}else{cat("No result for query on administrative level ", level)}
@@ -88,8 +88,8 @@ if(is.null(pre_download_check_result)){ #if there is no file already, run the co
 
           #Query
           message("API request OSM border")
-          query <- osmdata::opq(bbox = city_bbox) %>%
-            osmdata::add_osm_feature(key = "boundary", value = "administrative") %>%
+          query <- osmdata::opq(bbox = city_bbox) |>
+            osmdata::add_osm_feature(key = "boundary", value = "administrative") |>
             osmdata::add_osm_feature(key = "admin_level", value = "8")
           
           # Send the request robustly

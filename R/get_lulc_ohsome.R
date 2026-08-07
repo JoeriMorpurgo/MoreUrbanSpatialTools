@@ -51,23 +51,27 @@ if(is.null(pre_download_check_result)){ #No LULC object found
   filter_parts <- paste0(keyval_df[[1]], "=", keyval_df[[2]]) #Mostly full dataset from OSM/OHSOME
   filter_str <- paste(filter_parts, collapse = " or ")
   
+
   # Convert year to ohsome time format
   time_str <- sprintf(date)
   
   # define API query
   query_lulc_sf <- ohsome::ohsome_elements_geometry(
-    boundary = bbox_vals,
+    boundary = sf::st_bbox(bbox_vals), #this simplifies the bbox, as large complex bboxes can gives issues....
     time = time_str,
     filter = filter_str,
     properties = c("metadata","tags"),
     clipGeometry = FALSE
   )
   
+  #quick test
+  #test <- ohsome_post(query_lulc_sf)
+  
   cat("Sending query to Ohsome")
   
   #Send API req with robust wrapper to retry upon fail  
   lulc_sf <- robust_api_request(
-    ohsome_post,
+    ohsome::ohsome_post,
     query_lulc_sf
   )
   

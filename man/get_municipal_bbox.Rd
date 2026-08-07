@@ -4,10 +4,12 @@
 \alias{get_municipal_bbox}
 \title{Retrieve municipal bbox as sf}
 \usage{
-get_municipal_bbox(city_name)
+get_municipal_bbox(city_name, OSM_check = F)
 }
 \arguments{
 \item{city_name}{character value. name of a city to retrieve the bbox for.}
+
+\item{OSM_check}{logical. Standard is FALSE. When true it also retrieves the bbox from OSM and merges the two bboxes. This can be helpful when the lat/long are flipped. However, the OSM API tends to be more picky in rejecting requests and is therefor this argument defaults to F.}
 }
 \description{
 This function is a wrapper around getbb and returns an sf object saved as an .rds on drive.

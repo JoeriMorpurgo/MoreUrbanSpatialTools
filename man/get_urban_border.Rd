@@ -2,37 +2,29 @@
 % Please edit documentation in R/get_urban_border.R
 \name{get_urban_border}
 \alias{get_urban_border}
-\title{Calculate urban border}
+\title{Define urban border}
 \usage{
 get_urban_border(
-  city_name,
-  historic = F,
+  city_name = NULL,
   date = NULL,
-  eps = 1000,
-  minPts = 100
+  bufferSize = NULL,
+  LULC = NULL,
+  save = T
 )
 }
 \arguments{
-\item{city_name}{character value. Name of a city}
-
-\item{historic}{TRUE or FALSE. Whether to retrieve current data from OpenStreetMaps or Ohsome for historic data}
+\item{city_name}{character value. Name of a city. This should correspond exactly to the name used in other functions of the package.}
 
 \item{date}{character value. Which date/time to retrieve the snapshot from Ohsome}
 
-\item{eps}{Distance to be considered}
+\item{bufferSize}{numeric value. Defaults to 500. Either, or combination, of 300, 500 or 1000. These indicate meters size of the moving average window to define urban border.}
 
-\item{minPts}{Minimum points for consideration of cluster}
+\item{LULC}{.tif. Map from Terra having LULC. The following LULC cats are recoginized as non-urban c("agriculture", "water", "river", "canal", "stream", "sea", "natural", "Green buffer zones").}
 
-\item{interactive}{TRUE or FALSE. Allows user to selct municipal borders through Mapview. This is not recommended, but can help with problems if this function returns borders for the wrong city.}
-
-\item{dbscan}{TRUE or FALSE. Use Density-based spatial clustering of applications with noise (DBSCAN) to find urban clusters.}
-
-\item{plot}{legacy. Can be set to TRUE}
+\item{save}{FALSE or path. Where to save the define urban border. Defaults to T to save border in the standard folder. F to no save. define path (character) to  place to in particular folder.}
 }
 \description{
-This function retrieves the municipal border and land-uses from OpenStreetMaps. After it transforms the land-use polygons into points
-every 100m^2. These points are put in the DBSCAN algorithm to cluster points. After all clusters in the largest 90\% are considered urban.
-Finally, a concave hull is drawn around the remaining urban points which represents an estimate of the urban area of interest (AOI)
+This function take the LULC file, creates a binary raster of urban environment through excluding green LULC. After it fill gaps between urban cell up to 1km and then define the urban border as 50\% of space having a urban LULC in either (default) 500m, 300m or 1000m moving window. NOTE: 1000m will be slow, and can crash, for larger cities.
 NOTE:
 Literature:
 }
@@ -40,6 +32,5 @@ Literature:
 PLACEHOLDER()
 
 }
-\keyword{DBSCAN}
-\keyword{border,}
+\keyword{border}
 \keyword{urban,}

@@ -6,11 +6,11 @@
 #' Literature: 
 #' @param aoi an object with an extent
 #' @param city_name character. Name of the city for the data retrieval
-#' @param start_date date. Start of the requesting images
-#' @param end_date date. End of the requesting images
+#' @param startdate date. Start of the requesting images
+#' @param enddate date. End of the requesting images
 #' @param sattelite character value. Sentinel or (future; Landsat)
-#' @param indicator Character value; NDV (future; EVI or LST)
-#' @param method Character value. Max or Mediam
+#' @param indicator Character value; NDVI (future; EVI or LST)
+#' @param method Character value. max, 90th, median, monthly_max, monthly_90th, monthly_median or none (for all images). 90th indicates the 90th percentile of a pixel value over the time period. Note: none will retrieve massive amounts of images.
 #' @param cloud_threshold numeric. Standard at 50. 
 #' @keywords API, Remote Sensing, Indicators, openEO
 #' @export
@@ -23,12 +23,13 @@ get_data_openeo <- function(aoi, #some aoi object/border
                             startdate, enddate,#Start and end analysis in time
                             satellite, #SENT-2, LSAT5/7/8
                             indicator, #NDVI, NDWI, MSAVI EVI, LST
-                            method,
-                            cloud_threshold = 50) {
+                            method, #max, 90th, median, monthly_max, monthly_90th, monthly_median or none
+                            cloud_threshold = 80) {
   
 #Check if we already have this data downloaded
 pre_download_check_result <- pre_download_check(city_name = city_name,
-                                                object = paste0(startdate,"_",enddate,"_",satellite,"_",indicator,"_",method))
+                                                object = paste0(startdate,"_",enddate,"_",satellite,"_",indicator,"_",method),
+                                                indicator = indicator) #this checks if the file is present in subfolder
 if(is.null(pre_download_check_result)){
   
   ##set satellite settings
@@ -36,7 +37,7 @@ if(is.null(pre_download_check_result)){
   if(satellite == "sentinel2"){
     idSat <- "SENTINEL2_L2A"
     mask_band <- "SCL"
-    mask_values <- c(1,3,8,9,10,11)
+    mask_values <- c(1,3,8,9,10)
     cloud_property <- "eo:cloud_cover"
     }
   
@@ -77,9 +78,8 @@ if(is.null(pre_download_check_result)){
             spatial_extent = list(west = aoi[1], south = aoi[2],
                                   east = aoi[3], north = aoi[4]),
             temporal_extent = c(startdate, enddate),
-            bands = 
-              if(idSat == "SENTINEL2_L2A"){c(bandsIndicator, mask_band)}else{bandsIndicator},
-              if(idSat == "SENTINEL2_L2A"){properties = list("eo:cloud_cover" = function(x) x <= cloud_threshold)#not for landsat
+            bands = if(idSat == "SENTINEL2_L2A"){c(bandsIndicator, mask_band)}else{bandsIndicator},
+              if(idSat == "SENTINEL2_L2A"){properties = list("eo:cloud_cover" = function(x) x <= cloud_threshold) #not for landsat
             }
   )
   print("Found image collection")
@@ -116,12 +116,12 @@ if(is.null(pre_download_check_result)){
       data = data,
       dimension = "bands",
       reducer = function(bands, context) {
-        blue <- bands[1]
-        red <- bands[2]
-        nir <- bands[3]
+        blue <- bands[1]/10000
+        red <- bands[2]/10000
+        nir <- bands[3]/10000
         
         #evi formula
-        (2.5*(nir-red))/(nir+6*red-7.5*blue+1)
+        (2.5*(nir-red))/((nir+6*red-7.5*blue)+1)
       }
     )
   }
@@ -131,8 +131,8 @@ if(is.null(pre_download_check_result)){
       data = data,
       dimension = "bands",
       reducer = function(bands, context) {
-        nir <- bands[1]
-        red <- bands[2]
+        nir <- bands[1]/10000
+        red <- bands[2]/10000
         
         #function
         (2 * nir + 1 - ((2 * nir + 1)^2 - 8 * (nir - red))^0.5) / 2
@@ -162,7 +162,7 @@ if(is.null(pre_download_check_result)){
   }
   
   # 4. Calculate the method
-  if (method == "max") {
+  if (method == "max") { #maximum of a cell in a year
     data = p$reduce_dimension(
       data = data,
       dimension = "t",
@@ -170,7 +170,16 @@ if(is.null(pre_download_check_result)){
     )
   }
   
-  if (method == "median") {
+  if (method == "90th") { # 90th percentile of a cell in a year
+    data = p$reduce_dimension(
+      data = data,
+      dimension = "t",
+      reducer = function(data, context) {p$quantiles(data = data, probabilities = c(0.9))}
+    )
+  }
+  
+  
+  if (method == "median") { # median of a cell in a year
     data = p$reduce_dimension(
       data = data,
       dimension = "t",
@@ -178,24 +187,77 @@ if(is.null(pre_download_check_result)){
     )
   }
   
-  print("Sending data request")
+  if (method == "monthly_max") {
+    # Aggregates your timeline into monthly maximum composites
+    data = p$aggregate_temporal_period(
+      data = data,
+      period = "month",
+      reducer = p$max
+    )
+  }
+  
+  if (method == "monthly_90th") { # 90th percentile of a cell in a year
+    data = p$aggregate_temporal_period(
+      data = data,
+      period = "month",
+      reducer = function(data, context) {p$quantiles(data = data, probabilities = c(0.9))}
+    )
+  }
+  
+  if (method == "monthly_median") {
+    # Aggregates your timeline into monthly median composites
+    data = p$aggregate_temporal_period(
+      data = data,
+      period = "month",
+      reducer = p$median
+    )
+  }
+  
+  #no temporal aggregation of the datacube
+  if (method == "none") {} #skip temporal aggregatopm
+  
+  
   
   # 5. Save and Download
   # Check if 'data' actually exists before calling save_result
+  print("Sending data request")
   if (!is.null(data)) {
+    
+    # check if the request is a timeseries and change .suffix accordingly
+    is_timeseries <- method %in% c("none", "monthly_max", "monthly_90th", "monthly_median")
+    file_ext <- if (is_timeseries) ".nc" else ".tif"
+    export_format <- if (is_timeseries) "NetCDF" else "GTiff"
+    
+    # paths
+    save_dir <- file.path("./MUST_downloaded_data", city_name, indicator)
+    if(!dir.exists(save_dir)){dir.create(save_dir, recursive =T)}
+    base_name <- paste0(startdate, "_", enddate, "_", satellite, "_", indicator, "_", method)
+    raw_path <- file.path(save_dir, paste0(base_name, "_raw", file_ext))
+    final_path <- file.path(save_dir, paste0(base_name, file_ext))
     
     #keep running the request until the file is here
     attempt <- 1
     max_attempts <- 5
-    while (!file.exists(paste0("./MUST_downloaded_data/",city_name,"/",startdate,"_",enddate,"_",satellite,"_",indicator,"_",method,"_raw.tif")) &&
-           attempt <= max_attempts) { #repeat this task until file exists
+    
+    #compute and retrieve result
+    while (!file.exists(raw_path) && attempt <= max_attempts) { #repeat this task until file exists
       
-      #calc and retrieve 
-      result = p$save_result(data = data,
-                             format = "GTiff",
-                             options = list(datatype = "float32"))
-      openeo::compute_result(result,
-                     output_file = paste0("./MUST_downloaded_data/",city_name,"/",startdate,"_",enddate,"_",satellite,"_",indicator,"_",method,"_raw.tif"))
+      #calc result  
+      if (is_timeseries) {
+        result = p$save_result(
+          data = data,
+          format = export_format
+        )
+      } else {
+        result = p$save_result(
+          data = data,
+          format = export_format,
+          options = list(datatype = "float32") # A named list correctly translates to a dictionary
+        )
+      }
+      
+      # compute and retrieve
+      openeo::compute_result(result, output_file = raw_path)
       
       #add to the attemptcounter
       Sys.sleep(10)
@@ -209,16 +271,34 @@ if(is.null(pre_download_check_result)){
   
   #pulling data and indicator specific clamping
   cat("Data saved now pulling in R environment")
-  resultingRast <- terra::rast(paste0("MUST_downloaded_data/",city_name,"/",startdate,"_",enddate,"_",satellite,"_",indicator,"_",method,"_raw.tif"))
+  resultingRast <- terra::rast(raw_path)
   
-  if(indicator %in% c("NDVI", "NDWI","MSAVI", "EVI")){resultingRast <- terra::clamp(resultingRast, lower = -1, upper = 1, values = F)} #values above 1 are urnealistic
-
-  terra::writeRaster(resultingRast, filename = paste0("MUST_downloaded_data/",city_name,"/",startdate,"_",enddate,"_",satellite,"_",indicator,"_",method,".tif"),
-              overwrite = T)
-  resultingRaster <- terra::rast(paste0("MUST_downloaded_data/",city_name,"/",startdate,"_",enddate,"_",satellite,"_",indicator,"_",method,".tif"))
+  if(indicator %in% c("NDVI", "NDWI","MSAVI", "EVI")){ #values above 1 are urnealistic
+    resultingRast <- terra::clamp(resultingRast, lower = -1, upper = 1, values = F)
+    } 
+  
+  if(file_ext == ".nc"){
+  #fix the names  
+  raw_names <- names(resultingRast)
+  num_days <- as.numeric(gsub("var_t=","",raw_names))
+  actual_dates <- as.Date("1990-01-01") + num_days
+      
+    #split temp aggregation
+    if(method == "none"){
+      names(resultingRast) <- format(actual_dates, "%Y-%m-%d")
+    }else{
+      names(resultingRast) <- format(actual_dates, "%Y-%m")
+      }
+  
+  #save stack
+  terra::writeCDF(resultingRast, filename = final_path, overwrite = T)
+  }else{
+  terra::writeRaster(resultingRast, filename = final_path, overwrite = T)
+  }
+  
   #return object
   return(resultingRast)
-  unlink(paste0("MUST_downloaded_data/",city_name,"/",startdate,"_",enddate,"_",satellite,"_",indicator,"_",method,"_raw.tif"))
+  unlink(raw_path)
 }
 else
 {

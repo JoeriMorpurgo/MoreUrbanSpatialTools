@@ -4,16 +4,33 @@
 \alias{collect_data}
 \title{Retrieve data objects for a city from 2017 to current.}
 \usage{
-collect_data(city_name, path, method, AHN = F)
+collect_data(
+  city_name,
+  path,
+  indicators,
+  lulc = T,
+  method,
+  startdate = "2017-01-01",
+  enddate = Sys.Date(),
+  AHN = F
+)
 }
 \arguments{
 \item{city_name}{character value. name of a city and country to retrieve data for. Format should be "city, country".}
 
 \item{path}{character value. path to where data should be stored.}
 
+\item{indicators}{vector with character values. One or multiple of "NDVI", "MSAVI", "EVI", "LST","NDWI". Vegetation indices are NDVI, MSAVI and EVI. LST is a proxy for temperature via Land Surface Temperature. NDWI, Normalized Difference Water Indicator, is a proxy for water stress.}
+
+\item{lulc}{logic. True to fetch Ohsome data on Landuse and Landcover.}
+
 \item{method}{character value. Either max or median.}
 
-\item{AHN}{logic. Shoudl always be F, unless the analysis is for a city in the Netherlands.}
+\item{startdate}{charachter. Standard is 2017-01-01, but may be later if wanted.}
+
+\item{enddate}{charachter. standard is result of Sys.Date(). This fetches year-month-day of the system and removes 1 year as not all data is available. This means 2026-03-12 would result in a 2025 enddate. Alternatively, a enddate may be entered with the "year-month-day" format.}
+
+\item{AHN}{logic. Should always be F, unless the analysis is for a city in the Netherlands and AHN data is wanted.}
 }
 \description{
 This function is a wrapper around several functions in the MUST package. The intended use is to simplify the data gathering process.

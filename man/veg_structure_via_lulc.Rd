@@ -2,12 +2,12 @@
 % Please edit documentation in R/veg_structure_via_lulc.R
 \name{veg_structure_via_lulc}
 \alias{veg_structure_via_lulc}
-\title{Generates a classified height map based on LULC and tree points from OSM.}
+\title{Generates a classified height map based on LULC from OSM/OHSOME data.}
 \usage{
 veg_structure_via_lulc(lulc_map, alternative_lookup = NULL)
 }
 \arguments{
-\item{lulc_map}{sf object. Should contain classes that relate to a CUGIC height class.}
+\item{lulc_map}{spatVector object from Terra. Should contain classes that relate to a CUGIC height class.}
 
 \item{alternative_lookup}{dataframe. A dataframe that functions as a lookup-table, where the first column contains the names of the classes of your lulc_map and the second column contains the names of the CUGIC height classes (grass, shrub or wooded).}
 }
