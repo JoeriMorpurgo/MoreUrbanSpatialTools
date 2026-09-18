@@ -5,7 +5,10 @@
 #' Literature: 
 #' @param city_name character value. Name of a city. This should correspond exactly to the name used in other functions of the package.
 #' @param date character value. Which date/time to retrieve the snapshot from Ohsome
-#' @param bufferSize numeric value. Defaults to 500. Either, or combination, of 300, 500 or 1000. These indicate meters size of the moving average window to define urban border.
+#' @param bufferSize numeric value. Defaults to 500, user input needs to be divisible by 10. This indicate meters size of the circular moving average window to define urban border.
+#' @param thresholdUrban numeric proportional value. Between 0-1 (defaults to 0.5). This value indicates the threshold proportion for the moving window to be considered urban. i.e. 0.5 will classify a cell as urban when 50% of the cells from the buffer are classified as urban.
+#' @param gap_bridge_distance numeric value. Defaults to 1000, user input needs to be divisible by 10. Indicating meters, that borders will grow and shrink with the intend to close gaps. The basic value of this is 1000 (1km), which relates to approx 15min walking. This makes strips of lands classified as non-urban in the city (parks, nature reserves, etc.) that span 2 km urban, but does not affect anything else.
+#' @param gap_filling Logical. TRUE indicates to fill gaps within the urban border after all other operations. This may help with large parks or non-urban classified land.
 #' @param LULC .tif. Map from Terra having LULC. The following LULC cats are recoginized as non-urban c("agriculture", "water", "river", "canal", "stream", "sea", "natural", "Green buffer zones").
 #' @param save FALSE or path. Where to save the define urban border. Defaults to T to save border in the standard folder. F to no save. define path (character) to  place to in particular folder.
 #' @keywords urban, border
@@ -17,7 +20,10 @@
 ####################### get_urban_aoi #####################
 get_urban_border <- function(city_name = NULL,
                               date = NULL,
-                              bufferSize = NULL,
+                              bufferSize = 500,
+                              thresholdUrban = 0.5,
+                              gap_bridge_distance = 1000,
+                              gap_filling = T,
                               LULC = NULL, #user provided LULC
                               save = T
                               ){
@@ -28,9 +34,13 @@ if(is.character(date)){dateYear <- lubridate::year(as.POSIXct(date))}else{dateYe
 #Check if we already have this data downloaded
 if(is.character(city_name) & is.character(date)){
 pre_download_check_result <- pre_download_check(city_name = city_name,
-                                                object = paste0("urban_border_",dateYear))} else (pre_download_check_result <- NULL)
+                                                subfolder = "borders/urban",
+                                                object = paste0("urban_",bufferSize,"border_",dateYear))} else (pre_download_check_result <- NULL)
 if(is.null(pre_download_check_result)){ #if there is no file already, run the code.
   
+  #check param input
+  if(bufferSize %% 10 != 0){return(print("Buffersize needs to be divisible by 10"))}else{windowSize <- bufferSize/10+1}
+  if(gap_bridge_distance %% 10 != 0){return(print("Gap_bridge_distance needs to be divisible by 10"))}else{gb_dist <- gap_bridge_distance/10+1}
     
   ##Retrieve the LULC and reproject
   if(is.null(LULC)){LULC <- terra::vect(paste0(getwd(),"/MUST_downloaded_data/",city_name,"/lulc",dateYear,".gpkg"))} #retrieve
@@ -47,39 +57,29 @@ if(is.null(pre_download_check_result)){ #if there is no file already, run the co
                    field = 1,
                    background = 0)
     
-  #moving window 50% of 1km as urban
-  ##check user input
-  if (is.null(bufferSize)){bufferSize <- 500}
-  
-  #lookup table
-  input_meters <- c(300, 500, 1000)
-  output_cells <- c(31,  51, 101)
-  windowSize <- output_cells[match(bufferSize, input_meters)]
-  
+
   #running the moving window
   for(q in windowSize){
   
     #closing small gaps
-    w_close <- focalMat(urbanLULCrast, d = 101, type = "circle") #weighted focal matrix
+    w_close <- focalMat(urbanLULCrast, d = gb_dist, type = "circle") #weighted focal matrix
     w_close <- ifelse(w_close > 0, 1, NA) #binary matrix
     dilated <- focal(urbanLULCrast, w = w_close, fun = "max", na.rm = T)
     closed <- focal(dilated, w = w_close, fun = "min", na.rm = T)
     
     #moving window
-    urbanBorder <- terra::focal(closed, w = q, 
-                              fun = "mean", expand = T)
+    urbanBorder <- terra::focal(closed, w = q, fun = "mean", expand = T)
   
     #from numerical to binary
-    urbanBorder <- urbanBorder>0.5 #half needs to be considered urban in a km
+    urbanBorder <- urbanBorder>thresholdUrban #half needs to be considered urban in a km
     urbanBorder <- urbanBorder*1 #from T/F to binary. This helps with other functions.
     urbanBorder[urbanBorder==0] <- NA #omit 0 from the rasters
   
       #for name to save object
-      name <- input_meters[match(q,output_cells)]
-      names(urbanBorder) <- name
+      names(urbanBorder) <- bufferSize
       #save object
-      assign(paste0("urbanBorderVect",name),
-             as.polygons(urbanBorder))#from raster to border vector
+      assign(paste0("urbanBorderVect",bufferSize),
+             fillHoles(as.polygons(urbanBorder)))#from raster to border vector
   }
   
   #put in 1 file

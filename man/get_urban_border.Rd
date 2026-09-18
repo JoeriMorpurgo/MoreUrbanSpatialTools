@@ -7,7 +7,10 @@
 get_urban_border(
   city_name = NULL,
   date = NULL,
-  bufferSize = NULL,
+  bufferSize = 500,
+  thresholdUrban = 0.5,
+  gap_bridge_distance = 1000,
+  gap_filling = T,
   LULC = NULL,
   save = T
 )
@@ -17,7 +20,13 @@ get_urban_border(
 
 \item{date}{character value. Which date/time to retrieve the snapshot from Ohsome}
 
-\item{bufferSize}{numeric value. Defaults to 500. Either, or combination, of 300, 500 or 1000. These indicate meters size of the moving average window to define urban border.}
+\item{bufferSize}{numeric value. Defaults to 500, user input needs to be divisible by 10. This indicate meters size of the circular moving average window to define urban border.}
+
+\item{thresholdUrban}{numeric proportional value. Between 0-1 (defaults to 0.5). This value indicates the threshold proportion for the moving window to be considered urban. i.e. 0.5 will classify a cell as urban when 50\% of the cells from the buffer are classified as urban.}
+
+\item{gap_bridge_distance}{numeric value. Defaults to 1000, user input needs to be divisible by 10. Indicating meters, that borders will grow and shrink with the intend to close gaps. The basic value of this is 1000 (1km), which relates to approx 15min walking. This makes strips of lands classified as non-urban in the city (parks, nature reserves, etc.) that span 2 km urban, but does not affect anything else.}
+
+\item{gap_filling}{Logical. TRUE indicates to fill gaps within the urban border after all other operations. This may help with large parks or non-urban classified land.}
 
 \item{LULC}{.tif. Map from Terra having LULC. The following LULC cats are recoginized as non-urban c("agriculture", "water", "river", "canal", "stream", "sea", "natural", "Green buffer zones").}
 

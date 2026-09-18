@@ -29,7 +29,7 @@ get_data_openeo <- function(aoi, #some aoi object/border
 #Check if we already have this data downloaded
 pre_download_check_result <- pre_download_check(city_name = city_name,
                                                 object = paste0(startdate,"_",enddate,"_",satellite,"_",indicator,"_",method),
-                                                indicator = indicator) #this checks if the file is present in subfolder
+                                                subfolder = indicator) #this checks if the file is present in subfolder
 if(is.null(pre_download_check_result)){
   
   ##set satellite settings

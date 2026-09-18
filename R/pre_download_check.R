@@ -1,7 +1,8 @@
-#' Checks if files are in cache and retrieves if ther
+#' Checks if files are in cache and retrieves if present.
 #'
-#' @param city_name folder it will look for
-#' @param object file to look for
+#' @param city_name folder to check in the MUST_downloaded_data folder.
+#' @param subfolder sub-folder to look for the object
+#' @param object file to retrieve
 #' @keywords OSM, Ohsome, Land-use, Land-cover, historic
 #' @export
 #' @examples
@@ -10,10 +11,10 @@
 #' 
 pre_download_check <- function(city_name,
                                object,
-                               indicator = NULL){
+                               subfolder = NULL){
   
   ##check if a MUST folder has been made
-  if(!("./MUST_downloaded_data" %in% list.dirs())){
+  if(!("./MUST_downloaded_data" %in% list.dirs(recursive = F))){
     print(paste0("No MUST download folder found. Will create new folder for downloads at ", getwd(),"/MUST_downloaded_data"))
     dir.create("MUST_downloaded_data") #create folder if no folder
     }
@@ -26,12 +27,12 @@ pre_download_check <- function(city_name,
     dir.create(city_path)
     }
   
-  #check if subfolder for indicator exists
+  #check if subfolder for subfolder exists
   target_dir <- city_path
-  if(!is.null(indicator)){
-    target_dir <- file.path("./MUST_downloaded_data/",city_name,"/",indicator)
+  if(!is.null(subfolder)){
+    target_dir <- file.path("./MUST_downloaded_data/",city_name,"/",subfolder)
     if(!dir.exists(target_dir)){
-      print(paste0("Creating indicator subfolder at ",target_dir))
+      print(paste0("Creating subfolder subfolder at ",target_dir))
       dir.create(target_dir)
     }
   }

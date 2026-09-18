@@ -1,18 +1,22 @@
 #' Transform Vegetation Index (VI) values into Fractional vegetation coverage and optionally into absolute coverage into m2. 
-#' This function work on dynamic approach by validating the VI as a classifier for green and grey by LULC maps.
-#' NDVI is the standard VI, however EVI and MSAVI typically perform better. The function searches for files in the MUST_downloaded_data folder in the city and VI subfolder for a file of the correct year and ending in median.tif
-#' The standard method the VI used is annual median. Max and 90th percentile are not recommend nor verified nor possible in this function.
+#' This function provides two options to rescale VI into Fractional vegetation coverage.
+#' Either provide a threshold for the VI_min argument or the character value "dynamic"" to use green and grey from LULC maps to determine a threshold via a classification problem. 
+#' Threshold by dynamic classification is calculated using a Weighted Youden threshold with sensitivity-weight 0.75 and specificity-weight of 0.25 
+#' The dynamic threshold argument also clamps all values below 0, to make the thresholding more reliable in case of odd patterns or data.
+#' The function returns either a raster or stack if save_fcv used with multiple values.
 #'
 #' NOTE: 
-#' Literature: Carlson, T. N., & Ripley, D. A. (1997). On the relation between NDVI, fractional vegetation cover, and leaf area index. Remote Sensing of Environment, 62(3), 241–252. https://doi.org/10.1016/S0034-4257(97)00104-1
-#' @param city_name character. Relates to the place where to look for NDVI.
+#' Literature: Carlson, T. N., & Ripley, D. A. (1997). On the relation between NDVI, fractional vegetation cover, and leaf area index. Remote Sensing of Environment, 62(3), 241–252. https://doi.org/10.1016/S0034-4257(97)00104-1; Li, D., Shen, F., Yin, Y., Peng, J., & Chen, P. (2013). Weighted Youden index and its two-independent-sample comparison based on weighted sensitivity and specificity. Chinese Medical Journal, 126(6), 1150–1154. https://doi.org/10.3760/cma.j.issn.0366-6999.20123102
+#' @param city_name character. Relates to the place where to look for data.
 #' @param date character. The year of the VI (and optionally LULC-map) to consider. Works only with YYYY-MM-DD format. or numeric year as YYYY format.
 #' @param VI character or terra rast. Character needs to be one of the follow: c("NDVI", "EVI", "MSAVI") and will retrieve this file. If a rast is provided this will be used as VI input.
-#' @param VI_min numeric OR "Dynamic". Numeric (default = 0.25) denotes the minimal threshold value of NDVI to be considered 0% vegetation coverage. The dynamic option requires LULC to be downloaded and draws random point in LULC that is and isn't green to determine a threshold. This also produces a plot and some extra information.
-#' @param figure character. Where to save the resulting image, defaults to results folder
+#' @param VI_min numeric OR "Dynamic". Numeric (default = 0.25) denotes the minimal threshold value of NDVI to be considered 0% vegetation coverage. The dynamic option requires LULC to be downloaded and draws random point in LULC that is and isn't green to determine a threshold. This also produces a plot and some extra information. NOTE: The dynamic approach only takes 1 raster layer. Providing a numeric value allows for the processing of a full Stack.
+#' @param weight numeric. Defaults to 0.75. Weight to be assigned to the Weighted Youden Index. 
+#' @param figure logical or path. Defaults to FALSE to not save a figure. TRUE save figure in the results folder where it shows A) distributions of values for green, grey and blue classes and the calculated threshold and B) Optimization curves with specificity, sensitivity and curves for (weighted) Youden Index. Alternatively, a path can be given to store the figure there.
 #' @param maskLayer spatVector. Object to mask the VI raster by.
 #' @param m2 logical. standard is F. When set to T, an extra multiplication is done by cell size to estimate the m2 covered by vegetation.
-#' @param save logical. Standard is FALSE. When set to true the VItoDensity map is saved to the results folder. You may also set a path with a character value.
+#' @param save_fcv character vector. default is NULL. Provide one or more of the following to scale the VI to that threshold c("95_sens","w_youden","youden"). Raster, or stack, is saved to results folder.
+#' @param save_path character vector. Defaults to the results folder. Users may specify path to store the fcv raster or stack in a different location or way.
 #' @export
 #' @examples
 #' PLACEHOLDER()
@@ -20,20 +24,25 @@
 
 ############ get_municipal_bbox #############
 VItoDensity <- function(city_name,
-                          date,
+                          date = NULL,
                           VI,
                           lulc = NULL,
                           VI_min = 0.25, #minimum level of NDVI to be considered green
+                          weight = 0.75,
                           maskLayer = NULL,
                           m2 = F, #Which calc to do
-                          figure = NULL,
-                          save = F){ 
+                          figure = F,
+                          save_fcv = NULL,
+                          save_path = NULL){ 
     
   
 
 #Grab year structure from character vector
 if(is.character(date)){year <- lubridate::year(date)} else{year <- date}
 VItype <- "userInput"
+
+# Capture time sequence to add back in later
+orig_time <- terra::time(VI)
   
         #Retrieve VI
         if(is.character(VI)){ #is the VI a character, which indicates retrieval.
@@ -51,22 +60,27 @@ VItype <- "userInput"
      
     
     #Calc max NDVI
-    VI_max <- as.numeric(terra::global(VI, fun = "max", na.rm = T))
-    VI[VI > VI_max] <- NA
+    VI_maxes <- as.numeric(unlist(terra::global(VI, fun = "max", na.rm = T)))
+    VI_max <- max(VI_maxes, na.rm=T)
+    print(paste0("Found and using the max value of ",VI_max, " for scaling. With a SD of: ",round(sd(VI_maxes, na.rm = T), digits = 4)))
     
     #Threshold options
     if(is.numeric(VI_min)){
       
-      ###MINIMUM THRESHOLD SET BY THE USER###
+      print(paste0("VI_min is set at: ", VI_min))
       
+      ###MINIMUM THRESHOLD SET BY THE USER###
       VI[VI < VI_min] <- NA
       output <- terra::app(VI, fun=function(x){((x-VI_min)/(VI_max-VI_min))})
-      output[is.na(output[])] <- 0
-      names(output) <- paste0("FcV")
+      output <- terra::subst(output, NA, 0)
+      names(output) <- paste0(names(output),"_FcV_",VI_min)
       
     } else {
       
-      ###MINIMUM THRESHOLD SET DYANMICALLY###
+      ### THRESHOLD SET DYANMICALLY ###
+      #remove values below 0. These are assumed to never be vegetation.
+      VI <- terra::clamp(VI, lower = 0, upper = Inf, value = F)
+      
       
       #lulc to validate
       if(is.null(lulc)){lulc <- terra::vect(paste0(getwd(),"/MUST_downloaded_data/",city_name,"/lulc",year,".gpkg"))}
@@ -127,10 +141,10 @@ VItype <- "userInput"
           metrics$sensitivity[i] <- tp / (tp + fn)
           metrics$specificity[i] <- tn / (tn + fp)
           metrics$youden_j[i] <- metrics$sensitivity[i] + metrics$specificity[i] - 1 # Yao Index / Youden's J
-          metrics$weighted_j[i] <- (0.75 * metrics$sensitivity[i]) + (0.25 * metrics$specificity[i]) #favour sensitivity
+          metrics$weighted_j[i] <- 2*(weight * metrics$sensitivity[i] + (1-weight) * metrics$specificity[i])-1 #favour sensitivity
         }
         
-        # Select optimal threshold based on Max Yao / Youden Index
+        # Select optimal threshold based on Youden Index
         opt_idx <- which.max(metrics$youden_j)
         thresholdGreen_j <- metrics$threshold[opt_idx]
         opt_j <- metrics$youden_j[opt_idx]
@@ -149,25 +163,25 @@ VItype <- "userInput"
           thresholdHigh95 <- min(metrics$threshold)
         }
       } 
-      
-      #quantile calcs
-      #thresholdGreen <- quantile(green_lulc_ndvi$ndvi, 0.05, na.rm = T)
-      #thresholdGrey <- quantile(grey_lulc_ndvi$ndvi, 0.95, na.rm = T)
-      
-      
+
       
       ### PLOTS ###
-      
       #plot params
       x_min <- min(c(density_green$x, density_grey$x, density_water$x))
       x_max <- max(c(density_green$x, density_grey$x, density_water$x))
       y_max <- max(c(density_green$y, density_grey$y, density_water$y))
       
       # place to save the figrues
-      if(is.character(figure)){
+      if(figure){ #standard location. AKA figure == T
         dir.create(paste0("MUST_downloaded_data/",city_name,"/result/VItoDensity/"), recursive = T, showWarnings = F)
         pdf(file = paste0("MUST_downloaded_data/",city_name,"/result/VItoDensity/",year,"_",VItype,"_thresholds.pdf"), width = 14, height = 6)
         }
+      #user-specified location
+      if(is.character(figure)){
+        pdf(file = paste0(figure,".pdf"), width = 14, height = 6)
+      }
+      
+      #specify how to panel the plots.
       par(mfrow = c(1, 2))
       
       # PANEL 1: Histograms
@@ -188,7 +202,7 @@ VItype <- "userInput"
         #vertical lines for the thresholds
         #abline(v = thresholdGreen, col = "forestgreen", lty = 2, lwd = 2)
         abline(v = thresholdGreen_j,col = "darkgreen", lty = 2, lwd  = 2)
-        abline(v = thresholdGreen_w, col = "lightgreen", lty = 2, lwd = 2)
+        abline(v = thresholdGreen_w, col = "darkorange", lty = 2, lwd = 2)
         abline(v = thresholdHigh95, col = "forestgreen", lty = 2, lwd = 2)
         #if(exists("thresholdGrey")) abline(v = thresholdGrey, col = "darkgrey", lty = 2, lwd = 2)
         
@@ -204,7 +218,7 @@ VItype <- "userInput"
                         rgb(0.12, 0.56, 1, 0.3),
                         NA, NA, NA),
                border = c("forestgreen", "darkgrey", "dodgerblue", NA, NA, NA),
-               col = c(NA, NA, NA, "forestgreen", "darkgreen", "lightgreen"),
+               col = c(NA, NA, NA, "forestgreen", "darkgreen", "darkorange"),
                lty = c(NA, NA, NA, 2, 2, 2),
                lwd = 2,
                cex = 0.75,
@@ -216,11 +230,12 @@ VItype <- "userInput"
         plot(metrics$threshold, metrics$sensitivity, type = "l", col = "forestgreen", lwd = 2,
              ylim = c(min(metrics$youden_j, 0), 1), xlab = "Threshold Value", ylab = "Metric Score",
              main = paste0("Optimization Curves (AUC = ", round(auc_score, 3), ")"))
-        lines(metrics$threshold, metrics$specificity, col = "dodgerblue", lwd = 2)
+        lines(metrics$threshold, metrics$specificity, col = "darkgreen", lwd = 2)
         lines(metrics$threshold, metrics$youden_j, col = "firebrick", lwd = 2)
+        lines(metrics$threshold, metrics$weighted_j, col = "darkorange", lwd = 2)
         abline(v = thresholdGreen_j, col = "black", lty = 2, lwd = 1.5)
         abline(v = thresholdHigh95, col = "darkgreen", lty = 2, lwd = 1.5)
-        abline(v = thresholdGreen_w, col = "lightgreen", lty = 2, lwd = 1.5)
+        abline(v = thresholdGreen_w, col = "darkorange", lty = 2, lwd = 1.5)
         
         legend("bottomleft",
                legend = c(paste0("Sensitivity (", round(opt_sens, 2), ")"),
@@ -229,7 +244,7 @@ VItype <- "userInput"
                           paste0("Youden Thresh = ", round(thresholdGreen_j, 3)),
                           paste0("95% Sens Thresh = ", round(thresholdHigh95, 3)),
                           paste0("Weighted Youden Thresh = ", round(thresholdGreen_w, 3))),
-               col = c("forestgreen", "dodgerblue", "firebrick", "black", "darkgreen", "lightgreen"), 
+               col = c("forestgreen", "dodgerblue", "firebrick", "black", "darkgreen", "darkorange"), 
                lty = c(1, 1, 1, 2, 2, 2),
                lwd = 2, bg = "white",
                cex = 0.75,
@@ -238,31 +253,71 @@ VItype <- "userInput"
 
       
       dev.off()
-      
-      
-    #Proportionally scale VI
-    VI[VI < thresholdGreen_w] <- NA
-    output <- terra::app(VI, fun=function(x){((x-thresholdGreen_w)/(VI_max-thresholdGreen_w))})
-    output[is.na(output[])] <- 0
-    names(output) <- "FcVDyna"
-    metags(output)  <- c(w_youden_threshold = thresholdGreen_w) #add attribute of the threshold used.
-    metags(output) <- c(youden_threshold = thresholdGreen_j)
-    metags(output) <- c(threshold_95 = thresholdHigh95)
-    metags(output) <- c(medGrey = median(grey_lulc_ndvi$ndvi))
-    metags(output) <- c(medGreen = median(green_lulc_ndvi$ndvi))
-    metags(output) <- c(medBlue = median(water_lulc_ndvi$ndvi))
     }
     
-    #convert to m2
-    if(m2){ # user wants m2
-      size <- terra::cellSize(output)
-      output <- size*output
-    }
     
-    if(save){
+    if(!is.null(save_fcv)){
+      
+      #scale VI to fcv according to the thresholds requested
+      #Proportionally scale VI
+      if(VI_min == "dynamic"){ #If dynamic and we want to save the fcv let's scale the rasters here
+        #copy for scaling interatively
+        VItoScale <- VI #copy
+        
+        for (i in save_fcv) { #one by one the rasters wanted
+          
+          #pick the right threshold
+          threshold <- "undefined"
+          threshold <- if(i == "95_sens"){threshold <- thresholdHigh95}else{threshold <- threshold}
+          threshold <- if(i == "w_youden"){threshold <- thresholdGreen_w}else{threshold <- threshold}
+          threshold <- if(i == "youden"){threshold <- thresholdGreen_j}else{threshold <- threshold}
+          
+          #scale to Vi to fcv
+          VItoScale[VItoScale < threshold] <- NA
+          nameForLayer <- paste0("FcV_",i,"_",round(threshold, digits = 3))
+          assign(paste0("VI_scaled_",i),
+                 terra::app(VItoScale, fun=function(x){((x-threshold)/(VI_max-threshold))}))
+          
+          #really inefficient way to assign name...
+          tmp <- get(paste0("VI_scaled_",i))
+          names(tmp) <- as.character(nameForLayer)
+          assign(paste0("VI_scaled_",i),
+                 tmp)
+          
+        }
+        #stack the individual layers to 1 output
+        output <- terra::rast(mget(c(paste0("VI_scaled_",save_fcv))))
+        output[is.na(output)] <- 0
+      }
+
+      
+      #multiply proportional by cell size to get m2
+      if(m2){ # user wants m2
+        size <- terra::cellSize(output)
+        output <- size*output
+      }
+      
+      #add some attributes
+      metags(output) <- c(w_youden_threshold = thresholdGreen_w) #add attribute of the threshold used.
+      metags(output) <- c(youden_threshold = thresholdGreen_j)
+      metags(output) <- c(threshold_95 = thresholdHigh95)
+      metags(output) <- c(medGrey = median(grey_lulc_ndvi$ndvi))
+      metags(output) <- c(medGreen = median(green_lulc_ndvi$ndvi))
+      metags(output) <- c(medBlue = median(water_lulc_ndvi$ndvi))
+      
+      #save the fcv raster
+      if(is.null(save_path)){
+      dir.create(paste0("MUST_downloaded_data/",city_name,"/result/"), showWarnings = F)
       dir.create(paste0("MUST_downloaded_data/",city_name,"/result/VItoDensity/"), showWarnings = F)
-      writeRaster(output, filename = paste0("MUST_downloaded_data/",city_name,"/result/VItoDensity/",year,"_",VItype,"_scaled.tif"))
+      terra::writeRaster(output, filename = paste0("MUST_downloaded_data/",city_name,"/result/VItoDensity/",year,"_",VItype,"_scaled_",VI_min,".tif"),
+                         overwrite = T)
+      }else{(terra::writeRaster(output, filename = paste0(save_path,".tif")))}
+      
       }
   
+    #add in time back
+    terra::time(output) <- orig_time
+    
+  print("Returning scaled raster")
   return(output)
 }

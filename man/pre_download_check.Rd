@@ -2,17 +2,19 @@
 % Please edit documentation in R/pre_download_check.R
 \name{pre_download_check}
 \alias{pre_download_check}
-\title{Checks if files are in cache and retrieves if ther}
+\title{Checks if files are in cache and retrieves if present.}
 \usage{
-pre_download_check(city_name, object, indicator = NULL)
+pre_download_check(city_name, object, subfolder = NULL)
 }
 \arguments{
-\item{city_name}{folder it will look for}
+\item{city_name}{folder to check in the MUST_downloaded_data folder.}
 
-\item{object}{file to look for}
+\item{object}{file to retrieve}
+
+\item{subfolder}{sub-folder to look for the object}
 }
 \description{
-Checks if files are in cache and retrieves if ther
+Checks if files are in cache and retrieves if present.
 }
 \examples{
 PLACEHOLDER()
