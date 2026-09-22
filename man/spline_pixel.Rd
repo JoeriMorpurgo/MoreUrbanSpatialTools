@@ -2,12 +2,16 @@
 % Please edit documentation in R/spline_pixel.R
 \name{spline_pixel}
 \alias{spline_pixel}
-\title{Spline interpolation based on equi-distant time-series}
+\title{Spline interpolation for a vector. Allows for setting a max gap and NA proportion for the vector. Moreover, there is also a clamp for both minimum and maximum values.}
 \usage{
-spline_pixel(y)
+spline_pixel(y, max_gap = 5, max_NA_prop = 0.5, maxVal = NULL, minVal = NULL)
 }
 \arguments{
 \item{y}{numeric vector. Time series for spline interpolation}
+
+\item{max_gap}{numeric (defaults to 5). Length of consecutive NA in the vector before interpolation to return the vector directly.}
+
+\item{max_NA_prop}{proportion (defaults to 0.5). Proportion of NA in the vector before interpolation to return vector direclty.}
 }
 \description{
 NOTE:

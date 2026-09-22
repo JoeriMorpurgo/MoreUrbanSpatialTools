@@ -20,7 +20,9 @@
 ############ get_municipal_bbox #############
 benchmark_approximation <- function(stack,
                                     methods,
-                                    HANTS_freq = 4,
+                                    HANTS_freq,
+                                    max_gap = 5,
+                                    max_NA_prop = 0.5,
                                     prop_NA = 0.1,
                                     seed = 43,
                                     verbose = F,
@@ -149,7 +151,9 @@ benchmark_approximation <- function(stack,
       if(verbose){message("Evaluating: Spline approximation")}  
       
       #spline prediction
-      stack_pred <- terra::app(stack_NA, fun = spline_pixel, cores = ncore)
+      stack_pred <- terra::app(stack_NA, 
+                               fun = spline_pixel, max_gap = max_gap, max_NA_prop = max_NA_prop, maxVal = 1,
+                               cores = ncore)
       
       # Extract predicted values at the sampled cell/layer positions
       track_df$y_pred_spline <- 0
@@ -168,7 +172,12 @@ benchmark_approximation <- function(stack,
       if(verbose){message("Evaluating: HANTS approximation")}  
       
       #HANTS
-      stack_pred <- HANTS_stack(stack_NA, cores = 8, freq = HANTS_freq, max_iter = 10, tolerance = 0.1)
+      stack_pred <- HANTS_stack(stack_NA, cores = 8,
+                                freq = HANTS_freq,
+                                max_iter = 5,
+                                tolerance = 0.1,
+                                max_gap = max_gap,
+                                max_NA_prop = max_NA_prop)
       
       # Extract predicted values at the sampled cell/layer positions
       track_df$y_pred_HANTS <- 0

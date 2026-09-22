@@ -2,9 +2,17 @@
 % Please edit documentation in R/HANTS_stack.R
 \name{HANTS_stack}
 \alias{HANTS_stack}
-\title{HANTS for a spatRaster stack.}
+\title{HANTS for a spatRaster stack. Frequency should be the frequencies expected in the dataset. E.g. annual cycle would be freq = 1. Function returns an identical stack with interpolated values at the NAs.}
 \usage{
-HANTS_stack(stack, cores = 1, freq = 1, max_iter = 3, tolerance = 0.1)
+HANTS_stack(
+  stack,
+  cores = 1,
+  freq = 1,
+  max_iter = 3,
+  tolerance = 0.1,
+  max_gap = 5,
+  max_NA_prop = 0.5
+)
 }
 \arguments{
 \item{stack}{stack raster Terra. Stack of rasters that need to be interpolated.}

@@ -10,7 +10,9 @@ Optionally, users can get a smoothScatter for the fit of the approximated agains
 benchmark_approximation(
   stack,
   methods,
-  HANTS_freq = 4,
+  HANTS_freq,
+  max_gap = 5,
+  max_NA_prop = 0.5,
   prop_NA = 0.1,
   seed = 43,
   verbose = F,

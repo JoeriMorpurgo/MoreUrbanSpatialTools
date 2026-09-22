@@ -2,9 +2,16 @@
 % Please edit documentation in R/HANTS_pixel.R
 \name{HANTS_pixel}
 \alias{HANTS_pixel}
-\title{HANTS curve for 1 pixel}
+\title{HANTS curve for a vector or 1 pixel in a raster stack. Requires at least half of pixels to have values.}
 \usage{
-HANTS_pixel(y, freq = 1, max_iter = 3, tolerance = 0.1)
+HANTS_pixel(
+  y,
+  freq = 1,
+  max_iter = 3,
+  tolerance = 0.1,
+  max_gap = 5,
+  max_NA_prop = 0.5
+)
 }
 \arguments{
 \item{y}{numeric vector. Time series for harmonic interpolation following HANTS algoritm.}
@@ -14,6 +21,10 @@ HANTS_pixel(y, freq = 1, max_iter = 3, tolerance = 0.1)
 \item{max_iter}{integer. Max number of iterations for outlier rejection.}
 
 \item{tolerance}{Numeric. Threshold for outlier rejection as absolute numeric value. Default is 0.10. In Roerink et al., (2000), the value used is 0.05.}
+
+\item{max_gap}{Numeric (defaults to 5). The number of maximum NA gap allowed before the values are directly returned}
+
+\item{max_NA_prop}{Numeric (defaults to 0.5). The proportion of NA that is allows in the vector for interpolation.}
 }
 \description{
 NOTE:
