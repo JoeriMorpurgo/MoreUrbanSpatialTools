@@ -6,8 +6,12 @@
 #' NOTE: This function can run into std::bad_alloc errors. Reducing terraOptions(mem_frac) tends to help.
 #' Literature: 
 #' @param stack stack. Stack of rasters that need to be interpolated.
-#' @param methods character vector. Names of the method to approximate NAs.Available are c("linear","spline","HANTS","spatial")
-#' @param HANTS_freq Integer. Frequency parameter for HANTS interpolation.  Should be estimated periodicity + 3. 
+#' @param methods character vector. Names of the method to approximate NAs.Available are c("linear","spline","HANTS","ND").
+#' @param HANTS_freq Integer. Frequency parameter for HANTS interpolation.  Should be the frequency of phenology.
+#' @param max_gap integer defaults to 4. Number of NA consequetively allowed before returning the original values of the pixel. Applies to HANTS and spline
+#' @param max_NA_prop numeric defaults to 0.5. Proportion of maximimum NAs allowed per pixel for calculcations. Applies to HANTS and spline
+#' @param maxVal numeric. Maximum value allowed by spline interpolation. Values higher will become maxVal.
+#' @param minVal numeric. Minimum value allowed by spline interpolation. Values lower will become minVal.
 #' @param prop_NA numeric (0-1). Defaults to 0.1. Proportion of non-NA cells to artificially mask
 #' @param seed integer. defaults to random, but can be set to be reproducable.
 #' @param verbose logical. True to get extra status updates.
@@ -23,6 +27,8 @@ benchmark_approximation <- function(stack,
                                     HANTS_freq,
                                     max_gap = 5,
                                     max_NA_prop = 0.5,
+                                    maxVal = 1,
+                                    minVal = NULL,
                                     prop_NA = 0.1,
                                     seed = 43,
                                     verbose = F,
@@ -30,7 +36,7 @@ benchmark_approximation <- function(stack,
                                     figure_path = NULL){
   
   #seed
-  if (!is.null(seed)) set.seed(seed)
+  if (!is.null(seed)){set.seed(seed)}
   
   # params
   nlyrs <- nlyr(stack) 
@@ -39,11 +45,13 @@ benchmark_approximation <- function(stack,
   # Track sample positions and true values
   track_df <- list()
   
-  # Step 1: Use spatSample to quickly sample valid cells & introduce NAs
+  #############################
+  ### Identify valid cells  ###
+  #############################
   for (i in 1:nlyrs) {
     
     #check the NA number
-    NA_samples <- round(sum(!is.na(values(stack[[i]])))*prop_NA, digits =0)
+    NA_samples <- round(as.numeric(terra::global(!is.na(stack[[i]]), "sum", na.rm = TRUE)[1, 1])*prop_NA, digits =0)
     
     if(NA_samples<10){print(paste0("Found less than 100 cells to sample in layer ",i))}
     if(NA_samples <10){next}
@@ -83,33 +91,30 @@ benchmark_approximation <- function(stack,
     return(NULL)
   }
   
-  ### ALTERNATIVE CELL MASKING ###
-  # mask sampled cells.
+  ####################################
+  ### Apply NA to identified cells ###
+  ####################################
   if (nrow(track_df) > 0) {
     
     # Pre-allocate a list to hold temporary file-backed rasters
     masked_layers <- list()
-    
+    tmpdir <- terraOptions(print = F)$tempdir
     for (u in seq_len(nlyrs)) {
       if(verbose) print(paste("Applying NAs to layer", u))
       
-      # 1. Isolate the single layer
+      # 1. Isolate the single layer and extract values
       lyr <- stack[[u]]
-      
-      # 2. Extract to a native R numeric vector (bypasses C++ spatial overhead)
       v <- terra::values(lyr)
       
       # 3. Apply NAs using standard R indexing (instantaneous)
       NAidx <- track_df$cell[track_df$layer == u]
-      if (length(NAidx) > 0) {
-        v[NAidx] <- NA
-      }
+      if (length(NAidx) > 0) {v[NAidx] <- NA}
       
       # 4. Put the modified values back into the layer
       terra::values(lyr) <- v
       
       # 5. Write to a temporary file on disk to completely clear it from RAM
-      tmp_file <- tempfile(fileext = ".tif")
+      tmp_file <- tempfile(tmpdir = tmpdir, fileext = ".tif")
       masked_layers[[u]] <- terra::writeRaster(lyr, tmp_file, overwrite = TRUE)
       
       # 6. Force R to clean up memory before the next loop starts
@@ -123,25 +128,24 @@ benchmark_approximation <- function(stack,
     if (verbose) message("STATUS: Random NAs applied across stack")
   }
   
-  
+  ########################################
   ### INTERPOLATION METHODS BELOW HERE ###
+  ########################################
   
     ###LINEAR INTERPOLATION###
     if("linear" %in% methods){
         if(verbose){message("Evaluating: Linear approximation")}  
       
         #predict linearly
-        stack_pred <- terra::approximate(stack_NA, method = "linear")
+        stack_pred_lin <- terra::approximate(stack_NA, method = "linear")
     
-        # Extract predicted values at the sampled cell/layer positions
+        # Make vector to store predictions
         track_df$y_pred_linear <- 0
         
         #retrieve predictions
         for (i in unique(track_df$layer)) {
-          NAidx <- track_df$cell[track_df$layer==i]
-          y_pred <- as.numeric(values(stack_pred[[i]])[NAidx])
-          track_df$y_pred_linear[track_df$layer==i] <- y_pred
-          if(verbose){print(paste0("copying predictions to df for layer ",i))}
+          NAidx <- track_df$cell[track_df$layer == i]
+          track_df$y_pred_linear[track_df$layer == i] <- as.numeric(stack_pred_lin[[i]][NAidx][,1])
         }
         
     }
@@ -151,19 +155,18 @@ benchmark_approximation <- function(stack,
       if(verbose){message("Evaluating: Spline approximation")}  
       
       #spline prediction
-      stack_pred <- terra::app(stack_NA, 
-                               fun = spline_pixel, max_gap = max_gap, max_NA_prop = max_NA_prop, maxVal = 1,
-                               cores = ncore)
+      stack_pred_spline <- terra::app(stack_NA, fun = spline_pixel,
+                                      max_gap = max_gap, max_NA_prop = max_NA_prop,
+                                      maxVal = 1, minVal = minVal,
+                                      cores = ncore)
       
-      # Extract predicted values at the sampled cell/layer positions
+      # Make vector to store predictions
       track_df$y_pred_spline <- 0
       
       #retrieve predictions
       for (i in unique(track_df$layer)) {
-        NAidx <- track_df$cell[track_df$layer==i]
-        y_pred <- as.numeric(values(stack_pred[[i]])[NAidx])
-        track_df$y_pred_spline[track_df$layer==i] <- y_pred
-        if(verbose){print(paste0("copying predictions to df for layer ",i))}
+        NAidx <- track_df$cell[track_df$layer == i]
+        track_df$y_pred_spline[track_df$layer == i] <- as.numeric(stack_pred_spline[[i]][NAidx][,1])
       }
     }
   
@@ -172,46 +175,40 @@ benchmark_approximation <- function(stack,
       if(verbose){message("Evaluating: HANTS approximation")}  
       
       #HANTS
-      stack_pred <- HANTS_stack(stack_NA, cores = 8,
-                                freq = HANTS_freq,
-                                max_iter = 5,
-                                tolerance = 0.1,
-                                max_gap = max_gap,
-                                max_NA_prop = max_NA_prop)
+      stack_pred_HANTS <- HANTS_stack(stack_NA, cores = 8,
+                                      freq = HANTS_freq, max_iter = 5, tolerance = 0.1,
+                                      max_gap = max_gap, max_NA_prop = max_NA_prop)
       
-      # Extract predicted values at the sampled cell/layer positions
+      # Make vector to store predictions
       track_df$y_pred_HANTS <- 0
       
       #retrieve predictions
       for (i in unique(track_df$layer)) {
-        NAidx <- track_df$cell[track_df$layer==i]
-        y_pred <- as.numeric(values(stack_pred[[i]])[NAidx])
-        track_df$y_pred_HANTS[track_df$layer==i] <- y_pred
-        if(verbose){print(paste0("copying predictions to df for layer ",i))}
+        NAidx <- track_df$cell[track_df$layer == i]
+        track_df$y_pred_HANTS[track_df$layer == i] <- as.numeric(stack_pred_HANTS[[i]][NAidx][,1])
       }
     }
   
     ###SPATIAL INTERPOLATION
-    if("spatial" %in% methods){
-      if(verbose){message("Evaluating: spatial approximation")}  
+    if("ND" %in% methods){
+      if(verbose){message("Evaluating: Normalized Difference approximation")}  
       
       #spat interpolation
-      stack_pred <- temporal_spatial_approximation(stack_NA)
+      stack_pred_ND <- temporal_spatial_approximation(stack_NA)
       
       # Extract predicted values at the sampled cell/layer positions
-      track_df$y_pred_spatial <- 0
+      track_df$y_pred_ND <- 0
       
       #retrieve predictions
       for (i in unique(track_df$layer)) {
-        NAidx <- track_df$cell[track_df$layer==i]
-        y_pred <- as.numeric(values(stack_pred[[i]])[NAidx])
-        track_df$y_pred_spatial[track_df$layer==i] <- y_pred
-        if(verbose){print(paste0("copying predictions to df for layer ",i))}
+        NAidx <- track_df$cell[track_df$layer == i]
+        track_df$y_pred_ND[track_df$layer == i] <- as.numeric(stack_pred_ND[[i]][NAidx][,1])
       }
     }
     
-  
-  ### INTERPOLATION METHODS DONE. TIME TO ASSESS ###
+  #########################################
+  ### INTERPOLATION ACCURACY ASSESSMENT ###
+  #########################################
   results<- list()
   for (method in methods) {
     
@@ -225,12 +222,21 @@ benchmark_approximation <- function(stack,
     
     if (length(yt) == 0) {
       mae <- NA; rmse <- NA; bias <- NA; r2 <- NA
+      q_2.5  <- NA; q_16   <- NA; q_84   <- NA; q_97.5 <- NA
     } else {
+      #error
       err  <- yp - yt
       mae  <- mean(abs(err))
       rmse <- sqrt(mean(err^2))
       bias <- mean(err) # Over/under-estimation
       r2   <- suppressWarnings(cor(yp, yt, use = "complete.obs")^2)
+      
+      #quantile
+      q_err <- quantile(err, probs = c(0.025, 0.16, 0.84, 0.975), na.rm = TRUE)
+      q_2.5  <- q_err["2.5%"]
+      q_16   <- q_err["16%"]
+      q_84   <- q_err["84%"]
+      q_97.5 <- q_err["97.5%"]
     }
     
     results[[method]] <- data.frame(
@@ -239,12 +245,20 @@ benchmark_approximation <- function(stack,
       RMSE         = round(rmse, 4),
       Bias         = round(bias, 4),
       R2           = round(r2, 4),
+      Q2.5         = round(q_2.5, 4),  
+      Q16          = round(q_16, 4),   
+      Q84          = round(q_84, 4),   
+      Q97.5        = round(q_97.5, 4), 
       Unfilled_NAs = sum(is.na(track_df[[ApproxColNm]]))
     )
   }
     
   #combine results
   results <- do.call(rbind, results)
+  
+  #######################
+  ### ENSEMBLE METHOD ###
+  #######################
   
   #sapply methods to assign weights
   weights <- sapply(methods, function(m) {
@@ -275,20 +289,72 @@ benchmark_approximation <- function(stack,
 
   # check performance of the ensemble method
   valid_ens <- !is.na(track_df$y_pred_ensemble) & !is.na(track_df$y_true)
-  err <- track_df$y_pred_ensemble[valid_ens] - track_df$y_true[valid_ens]
-  results <- results %>% add_row(Method = "ensemble",
-                                 MAE = round(mean(abs(err)),4),
-                                 RMSE = round(sqrt(mean(err^2)),4),
-                                 Bias = round(mean(err),4),
+  err_ens <- track_df$y_pred_ensemble[valid_ens] - track_df$y_true[valid_ens]
+  q_ens   <- quantile(err_ens, probs = c(0.025, 0.16, 0.84, 0.975), na.rm = TRUE)
+  results <- results %>% dplyr::add_row(Method = "ensemble",
+                                 MAE = round(mean(abs(err_ens)),4),
+                                 RMSE = round(sqrt(mean(err_ens^2)),4),
+                                 Bias = round(mean(err_ens),4),
+                                 Q2.5 = round(q_ens["2.5%"], 4),
+                                 Q16 = round(q_ens["16%"], 4),
+                                 Q84= round(q_ens["84%"], 4),
+                                 Q97.5 = round(q_ens["97.5%"], 4),
                                  R2 = round(suppressWarnings(cor(track_df$y_pred_ensemble, track_df$y_true, use = "complete.obs")^2),4)
                                  )
+  row.names(results)[nrow(results)] <- "ensemble" #fix this rowname.
+  ######################################
+  ### CREATION OF THE ENSEMBLE STACK ###
+  ######################################
+  # 1. Collect all generated method stacks into a named list
+  method_stacks <- list()
+  if ("linear" %in% methods && exists("stack_pred_lin"))    method_stacks[["linear"]] <- stack_pred_lin
+  if ("spline" %in% methods && exists("stack_pred_spline")) method_stacks[["spline"]] <- stack_pred_spline
+  if ("HANTS"  %in% methods && exists("stack_pred_HANTS"))  method_stacks[["HANTS"]]  <- stack_pred_HANTS
+  if ("ND"     %in% methods && exists("stack_pred_ND"))     method_stacks[["ND"]]     <- stack_pred_ND
   
-  # Save a figure of fit of the approximation
+  # 2. Extract matching scalar weights calculated in your performance step
+  active_methods <- names(method_stacks)
+  active_weights <- weights[active_methods]
+  
+  # 3. Compute pixel-wise weighted sum and weight denominator
+  # Initialize zero-valued rasters matching the dimensions/crs of the input stack
+  weighted_sum_stack <- terra::rast(stack_NA, vals = 0)
+  weight_denom_stack <- terra::rast(stack_NA, vals = 0)
+  
+  for (m in active_methods) {
+    w <- active_weights[[m]] #retrieve weight
+    r_stack <- method_stacks[[m]] #retrieve stack
+    
+    if (w > 0) {
+      # Identify where predictions are non-NA
+      valid_mask <- !is.na(r_stack)
+      
+      # Set NAs to 0 in copy for clean addition
+      r_clean <- terra::classify(r_stack, cbind(NA, 0))
+      
+      # Accumulate weighted values and weight mask
+      weighted_sum_stack <- weighted_sum_stack + (r_clean * w) # value * weight 
+      weight_denom_stack <- weight_denom_stack + (valid_mask * w) # always the weight (i.e. will be total weight of approx cells)
+      
+      rm(r_clean, valid_mask) #clean-up
+    }
+  }
+  
+  # 4. Divide numerator by denominator (returns NA where weight_denom_stack is 0)
+  weight_denom_stack[weight_denom_stack == 0] <- NA
+  stack_pred_ensemble <- weighted_sum_stack / weight_denom_stack
+  names(stack_pred_ensemble) <- paste0(names(stack), "_ensemble")
+  
+  rm(weighted_sum_stack, weight_denom_stack) #cleanup
+  
+  ########################################
+  ### FIGURE TO SAVE APPROXIMATION FIT ###
+  ########################################
   if(!is.null(figure_path)){
       for (i in results$Method) {
         predName <- paste0("y_pred_",i)
-        
-        agg_png(file = paste0(figure_path,".png"), width = 2000, height = 2000, res = 300)
+        dir.create(paste0(figure_path,"_",i,".png"), showWarnings = F, recursive = T) #to make the directory
+        png(file = paste0(figure_path,"_",i,".png"), width = 2000, height = 2000, res = 300)
         smoothScatter(track_df[[predName]] ~ track_df$y_true,
                       bandwidth = 0.1, nrpoints=10000,
                       xlab = "True Y", ylab = paste0("Predicted Y by ",i),
@@ -297,7 +363,23 @@ benchmark_approximation <- function(stack,
       }
   }
   
-  return(results)
+  #################################
+  ### CONSTRUCT THE OUTPUT LIST ###
+  #################################
+  # Initialize the output list with 'results' as the first element
+  output <- list(metrics = results)
+  
+  # Conditionally add stacks if they were computed
+  if ("linear" %in% methods && exists("stack_pred_lin")) {output$stack_pred_lin <- stack_pred_lin}
+  if ("spline" %in% methods && exists("stack_pred_spline")) {output$stack_pred_spline <- stack_pred_spline}
+  if ("HANTS" %in% methods && exists("stack_pred_HANTS")) {output$stack_pred_HANTS <- stack_pred_HANTS}
+  if ("ND" %in% methods && exists("stack_pred_ND")) {output$stack_pred_ND <- stack_pred_ND}
+  if (exists("stack_pred_ensemble")) {output$stack_pred_ensemble <- stack_pred_ensemble}
+  
+  
+  gc(verbose = F)
+  
+  return(output)
  
   
 } 

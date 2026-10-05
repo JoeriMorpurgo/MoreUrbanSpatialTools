@@ -13,6 +13,8 @@ benchmark_approximation(
   HANTS_freq,
   max_gap = 5,
   max_NA_prop = 0.5,
+  maxVal = 1,
+  minVal = NULL,
   prop_NA = 0.1,
   seed = 43,
   verbose = F,
@@ -23,9 +25,17 @@ benchmark_approximation(
 \arguments{
 \item{stack}{stack. Stack of rasters that need to be interpolated.}
 
-\item{methods}{character vector. Names of the method to approximate NAs.Available are c("linear","spline","HANTS","spatial")}
+\item{methods}{character vector. Names of the method to approximate NAs.Available are c("linear","spline","HANTS","ND").}
 
-\item{HANTS_freq}{Integer. Frequency parameter for HANTS interpolation.  Should be estimated periodicity + 3.}
+\item{HANTS_freq}{Integer. Frequency parameter for HANTS interpolation.  Should be the frequency of phenology.}
+
+\item{max_gap}{integer defaults to 4. Number of NA consequetively allowed before returning the original values of the pixel. Applies to HANTS and spline}
+
+\item{max_NA_prop}{numeric defaults to 0.5. Proportion of maximimum NAs allowed per pixel for calculcations. Applies to HANTS and spline}
+
+\item{maxVal}{numeric. Maximum value allowed by spline interpolation. Values higher will become maxVal.}
+
+\item{minVal}{numeric. Minimum value allowed by spline interpolation. Values lower will become minVal.}
 
 \item{prop_NA}{numeric (0-1). Defaults to 0.1. Proportion of non-NA cells to artificially mask}
 
