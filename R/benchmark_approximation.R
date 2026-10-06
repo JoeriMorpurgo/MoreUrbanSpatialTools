@@ -370,7 +370,7 @@ benchmark_approximation <- function(stack,
   output <- list(metrics = results)
   
   # Conditionally add stacks if they were computed
-  if ("linear" %in% methods && exists("stack_pred_lin")) {output$stack_pred_lin <- stack_pred_lin}
+  if ("linear" %in% methods && exists("stack_pred_lin")) {output$stack_pred_linear <- stack_pred_lin}
   if ("spline" %in% methods && exists("stack_pred_spline")) {output$stack_pred_spline <- stack_pred_spline}
   if ("HANTS" %in% methods && exists("stack_pred_HANTS")) {output$stack_pred_HANTS <- stack_pred_HANTS}
   if ("ND" %in% methods && exists("stack_pred_ND")) {output$stack_pred_ND <- stack_pred_ND}
