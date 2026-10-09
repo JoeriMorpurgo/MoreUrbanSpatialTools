@@ -353,7 +353,7 @@ benchmark_approximation <- function(stack,
   if(!is.null(figure_path)){
       for (i in results$Method) {
         predName <- paste0("y_pred_",i)
-        dir.create(paste0(figure_path,"_",i,".png"), showWarnings = F, recursive = T) #to make the directory
+        dir.create(paste0(figure_path,"_",i), showWarnings = F, recursive = T) #to make the directory
         png(file = paste0(figure_path,"_",i,".png"), width = 2000, height = 2000, res = 300)
         smoothScatter(track_df[[predName]] ~ track_df$y_true,
                       bandwidth = 0.1, nrpoints=10000,

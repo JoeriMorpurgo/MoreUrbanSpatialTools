@@ -11,30 +11,36 @@
 ############ temporal interpolation by spatial patterns #############
 temporal_spatial_approximation <- function(stack){
   
-
-  #clamp to make formula work for ND. The use original raster to apply
-  stackFun <- terra::clamp(stack, lower = 0, upper = 1, values = F)
+  #clamp values
+  stackFun <- terra::clamp(stack, lower = 0, upper = 1, values = FALSE)
   
-  for (i in seq_along(1:nlyr(stackFun))) {
-    
-    if(i == 1){next} #skip first layer, we can not calculate
-    
-    # calculate the proportional difference between current and previous layer. Adding small number to make it not explode by 0s.
-    norm_diff <- ((stackFun[[i]] - stackFun[[i-1]])/(stackFun[[i]] + stackFun[[i-1]]))
-    #take the median value of the normalized difference.
-    median_norm_diff <- median(as.numeric(values(norm_diff)), na.rm = T)
-    multiplier <- (1 + median_norm_diff) / (1 - median_norm_diff)
-    
-    # change the value that are NA in stack[[i]] by the normalized difference multiplier
-    NAidx <- which(is.na(values(stack[[i]])) == T) #index of the values that are NA
-    stack[[i]][NAidx] <- stack[[i-1]][NAidx] * multiplier #fill in these NA cells
-    
-    print(paste0("STATUS: Approximated layer ", i, " with a multiplier of ", round(multiplier, digits = 3)))
-    
+  #calc norm diff
+  diff_stack <- (stackFun[[-1]] - stackFun[[-nlyr(stackFun)]]) / 
+    (stackFun[[-1]] + stackFun[[-nlyr(stackFun)]])
+  
+  #mean per diff
+  median <- global(diff_stack, fun = median, na.rm = TRUE)[[1]]
+  
+  #multipliers
+  median[is.na(median) | is.nan(median)] <- 0
+  multipliers <- (1 + median) / (1 - median)
+  
+  #list for calcs
+  out_layers <- vector("list", nlyr(stack))
+  out_layers[[1]] <- stack[[1]]
+  
+  #impute
+  for (i in 2:nlyr(stack)) {
+    mult <- multipliers[i - 1]
+    imputed <- out_layers[[i - 1]] * mult
+    out_layers[[i]] <- terra::cover(stack[[i]], imputed)
+    print(paste0("STATUS: Approximated layer ", i, " with a multiplier of ", round(mult, digits = 3)))
   }
   
+  out_stack <- rast(out_layers)
+  
   # return the stack
-  return(stack)
+  return(out_stack)
   
   
 } 
