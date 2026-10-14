@@ -22,7 +22,7 @@ temporal_spatial_approximation <- function(stack){
   median <- global(diff_stack, fun = median, na.rm = TRUE)[[1]]
   
   #multipliers
-  median[is.na(median) | is.nan(median)] <- 0
+  #median[is.na(median) | is.nan(median)] <- 0
   multipliers <- (1 + median) / (1 - median)
   
   #list for calcs

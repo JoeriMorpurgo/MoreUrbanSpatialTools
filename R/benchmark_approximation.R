@@ -45,88 +45,56 @@ benchmark_approximation <- function(stack,
   # Track sample positions and true values
   track_df <- list()
   
-  #############################
-  ### Identify valid cells  ###
-  #############################
+  #calc NA to sample per layer
+  NA_samples <- round(as.numeric(terra::global(!is.na(stack), "sum", na.rm = TRUE)[, 1])*prop_NA, digits =0)
+  
+  mat_vals <- terra::values(stack)
+  
+  #########################################
+  ### Identify and replace valid cells  ###
+  #########################################
   for (i in 1:nlyrs) {
     
-    #check the NA number
-    NA_samples <- round(as.numeric(terra::global(!is.na(stack[[i]]), "sum", na.rm = TRUE)[1, 1])*prop_NA, digits =0)
+    #check if 100 cells found
+    if(NA_samples[i]<100){
+      print(paste0("Found less than 100 cells to sample in layer ",i))
+      next #if not skip the layer
+    } 
     
-    if(NA_samples<10){print(paste0("Found less than 100 cells to sample in layer ",i))}
-    if(NA_samples <10){next}
+    #pull valid cells
+    valid_cells <- which(!is.na(mat_vals[, i]))
+    if (length(valid_cells) == 0) next #empty raster layer = skip
     
-    #retrieve random cells that have a value
-    sampled_cells <- terra::spatSample(
-      stack[[i]], 
-      size     = NA_samples, 
-      method   = "random", 
-      na.rm    = TRUE, #dont take NA cells
-      cells    = TRUE, #grab cell=number
-      values   = TRUE  #grab actual value
+    #sample and replace by NA
+    sampled_idx <- sample(valid_cells, size = NA_samples[i])
+    track_df[[i]] <- data.frame(
+      layer = i,
+      cell = sampled_idx, 
+      y_true = mat_vals[sampled_idx, i] #pull real values
     )
+    mat_vals[sampled_idx, i] <- NA #make real values NA to approximate later
     
-    if (length(sampled_cells) > 0) {
-      
-      # Record ground truth
-      track_df[[i]] <- data.frame(layer = i,
-                                  cell = sampled_cells[,1], 
-                                  y_true = sampled_cells[,2]
-                                  )
-      
-      if(verbose){print(paste0("STATUS: Selected NA locations for layer ",i))}
+    
+    if (verbose) { #status update
+      print(paste0("STATUS: Selected NA locations for layer ", i))
     }
   }
   
-  # Combine list elements into a data frame safely
-  if (length(track_df) > 0) {
-    track_df <- do.call(rbind, track_df)
-  } else {
-    track_df <- data.frame(layer = integer(), cell = integer(), y_true = numeric())
-  }
+  #combine into 1 list
+  track_df <- if(length(track_df) > 0){do.call(rbind, track_df)
+  }else{
+    data.frame(layer = integer(), cell = integer(), y_true = numeric())}
   
-  #error check if anything was present at all.
+  # Error check if anything was present at all
   if (nrow(track_df) == 0) {
     warning("No valid cells were sampled. Check prop_NA or raster non-NA cell counts.")
     return(NULL)
   }
   
-  ####################################
-  ### Apply NA to identified cells ###
-  ####################################
-  if (nrow(track_df) > 0) {
-    
-    # Pre-allocate a list to hold temporary file-backed rasters
-    masked_layers <- list()
-    tmpdir <- terraOptions(print = F)$tempdir
-    for (u in seq_len(nlyrs)) {
-      if(verbose) print(paste("Applying NAs to layer", u))
-      
-      # 1. Isolate the single layer and extract values
-      lyr <- stack[[u]]
-      v <- terra::values(lyr)
-      
-      # 3. Apply NAs using standard R indexing (instantaneous)
-      NAidx <- track_df$cell[track_df$layer == u]
-      if (length(NAidx) > 0) {v[NAidx] <- NA}
-      
-      # 4. Put the modified values back into the layer
-      terra::values(lyr) <- v
-      
-      # 5. Write to a temporary file on disk to completely clear it from RAM
-      tmp_file <- tempfile(tmpdir = tmpdir, fileext = ".tif")
-      masked_layers[[u]] <- terra::writeRaster(lyr, tmp_file, overwrite = TRUE)
-      
-      # 6. Force R to clean up memory before the next loop starts
-      rm(lyr, v)
-      gc(verbose = FALSE)
-    }
-    
-    # 7. Rebuild the stack directly from the lightweight disk files
-    stack_NA <- terra::rast(masked_layers)
-    
-    if (verbose) message("STATUS: Random NAs applied across stack")
-  }
+  stack_NA <- stack
+  values(stack_NA) <- mat_vals  # Writes back to the stack in one fast step
+  
+  if(verbose){message("STATUS: Random NAs applied across stack")}
   
   ########################################
   ### INTERPOLATION METHODS BELOW HERE ###
