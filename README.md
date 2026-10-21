@@ -1,6 +1,6 @@
 # More Urban Spatial Tools (MUST)
 
-**More Urban Spatial Tools (MUST)** is an R package designed to support urban GIS analysis and the study of changes in urban environments over time.
+**More Urban Spatial Tools (MUST)** is an R package designed to support urban GIS analysis over time.
 
 The package aims to bring together geospatial remote sensing (via OpenEO) and land-use/land-cover (via OpenStreetMaps and Ohsome) datasets from  to facilitate the analysis of urban areas, land use, vegetation, and environmental conditions.
 
