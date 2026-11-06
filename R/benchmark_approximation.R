@@ -94,6 +94,11 @@ benchmark_approximation <- function(stack,
   stack_NA <- stack
   values(stack_NA) <- mat_vals  # Writes back to the stack in one fast step
   
+  #release memory
+  mat_vals <- NULL 
+  rm(mat_vals)
+  gc(verbose = F)
+  
   if(verbose){message("STATUS: Random NAs applied across stack")}
   
   ########################################

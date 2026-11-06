@@ -1,0 +1,22 @@
+---
+title: "From Vegetation Indicator to Vegetation coverage"
+author: "Joeri Morpurgo, Leiden University, j.morpurgo@cml.leidenuniv.nl"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{From Vegetation Indicator to Vegetation coverage}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>"
+)
+```
+
+# Development ongoing
+
+```{r setup}
+library(MUST)
+```

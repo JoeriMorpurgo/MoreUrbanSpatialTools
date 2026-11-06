@@ -18,8 +18,17 @@ temporal_spatial_approximation <- function(stack){
   diff_stack <- (stackFun[[-1]] - stackFun[[-nlyr(stackFun)]]) / 
     (stackFun[[-1]] + stackFun[[-nlyr(stackFun)]])
   
-  #mean per diff
-  median <- global(diff_stack, fun = median, na.rm = TRUE)[[1]]
+  #mean per diff layer
+  ##memory intensive for big stack so looping
+  median <- numeric(terra::nlyr(diff_stack))
+  for(i in seq_along(median)){
+    median[i] <- terra::global(diff_stack[[i]], fun = stats::median, na.rm = TRUE)[[1]]
+  }
+
+  
+  #release memory
+  rm(diff_stack, stackFun)
+  gc(verbose = F)
   
   #multipliers
   #median[is.na(median) | is.nan(median)] <- 0
@@ -38,6 +47,10 @@ temporal_spatial_approximation <- function(stack){
   }
   
   out_stack <- rast(out_layers)
+  
+  #release memory
+  rm(out_layers)
+  gc(verbose = F)
   
   # return the stack
   return(out_stack)

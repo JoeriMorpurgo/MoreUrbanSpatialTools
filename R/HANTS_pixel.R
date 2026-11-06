@@ -10,7 +10,7 @@
 #' @param max_NA_prop Numeric (defaults to 0.5). The proportion of NA that is allows in the vector for interpolation.
 #' @export
 #' @examples
-#' PLACEHOLDER()
+#' #PLACEHOLDER()
 #' 
 
 ############ HANTS_curve #############
@@ -59,7 +59,7 @@ HANTS_pixel <- function(y, freq = 1, max_iter =3, tolerance = 0.1, max_gap = 5, 
       break
     }
     
-    fit <- lm.fit(
+    fit <- stats::lm.fit(
       x = X[valid, , drop = FALSE], #drop values that are not valid
       y = y[valid]
     )

@@ -31,6 +31,6 @@ NOTE:
 Literature: Roerink, G. J., Menenti, M., & Verhoef, W. (2000). Reconstructing cloudfree NDVI composites using Fourier analysis of time series. International Journal of Remote Sensing, 21(9), 1911–1917. https://doi.org/10.1080/014311600209814
 }
 \examples{
-PLACEHOLDER()
+#PLACEHOLDER()
 
 }

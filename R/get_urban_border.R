@@ -47,7 +47,9 @@ if(is.null(pre_download_check_result)){ #if there is no file already, run the co
   LULC <- project_to_local_utm(LULC)
   
   #Define all non-urban LULC and remove them.
-  nonUrban <- lulc_info$Value[lulc_info$Simplified_CUGIC_class %in% c("agriculture", "water", "river", "canal", "stream", "sea", "natural", "Green buffer zones")]
+  nonUrban <- lulc_info$Value[lulc_info$Simplified_CUGIC_class %in% c("agriculture", "water", "river", "canal",
+                                                                      "stream", "sea", "natural", "Green buffer zones",
+                                                                      "wetland", "basin")]
   urbanLULC <- LULC[!c(LULC$lulc %in% nonUrban)]
   
   #template raster and rasterisation of the urbanLULC

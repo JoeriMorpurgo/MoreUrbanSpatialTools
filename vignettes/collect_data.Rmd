@@ -1,0 +1,64 @@
+---
+title: "Collecting the spatial and temporal data for a city"
+author: "Joeri Morpurgo, Leiden University, j.morpurgo@cml.leidenuniv.nl"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Collecting the spatial and temporal data for a city}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>"
+)
+```
+
+# Packages
+First, we install the relevant packages for requesting the data. In this case, that would be openeo, osmdata and ohsome. These are the main provides for the remote sensing and land-use/land-cover data we will request. In addition, we will load terra and sf to both view and manipulate the retrieved data.
+
+IMPORTANT: For the data collection via the MUST package, it is required to have both an account at OpenEO and Ohsome. The data collection via these platforms is free of cost (as of writing this vignette October, 2026).
+
+```{r setup, echo = T, results='hide'}
+library(MUST)
+library(openeo)
+library(osmdata)
+library(ohsome)
+library(terra)
+library(sf)
+```
+
+# Cities of interest
+The MUST package work from the perspective of cities. To facilitate the analysis, we first define the city of interest. This can be multiple in a character vector, but for simplicity we will name one city. In the code below, we use a decently small city, "The Hague, Netherlands", prioritizing speedy execution of the code. NOTE: It is important to also define the country of the city as many city names are related to different places in the world. MUST leverages OpenStreetMaps for the initial definition of the boundary box.
+
+For the collection of data, we use the function collect_data. This is a function that wraps around several functions with MUST to facilitate simplicity of data retrieval. In short, it 1) connects to OpenStreetMaps to retrieve the municipal border, 2) specifies a data request to OpenEO for sentinel-2 or Landsat data, 3) requests LULC data from Ohsome, and finally 4) maps vegetation structure by LULC Ohsome maps (or AHN if city is present in Netherlands).
+
+Several arguments should be specified. Highly important as the path (where to store data), start and end date, indicator(s) (NDVI, EVI, NDWI, MSAVI or LST), lulc (TRUE or FALSE) and the temporal aggregation in method which can be annual (max, 90th, median), monthly (monthly_max, monthly_90th, monthly_median) or none (retrieves all images. NOTE: This will result in an image per approx. 5 days).
+
+The code below will retrieve NDVI, EVI, NDWI, MSAVI and LULC for The Hague, Netherlands between 2025 and 2026 and the files will be placed at "D:/vignettes", where an additional folder structure will be made in which users can either work with the retrieved files or add in their own files for MUST to recognize. 
+
+```{r, eval=FALSE}
+collect_data(city_name = "The Hague, Netherlands",
+               path = "D:/vignettes",
+               startdate = "2025-01-01",
+               enddate = "2026-01-01",
+               indicators = c("NDVI","EVI","NDWI","MSAVI"),
+               lulc = T,
+               method = "monthly_median",
+               AHN = F)
+```
+
+# Folder and file structure
+
+```{r}
+
+```
+
+# Exploring data
+
+```{r}
+
+```
+

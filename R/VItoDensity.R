@@ -62,7 +62,7 @@ orig_time <- terra::time(VI)
     #Calc max NDVI
     VI_maxes <- as.numeric(unlist(terra::global(VI, fun = "max", na.rm = T)))
     VI_max <- max(VI_maxes, na.rm=T)
-    print(paste0("Found and using the max value of ",VI_max, " for scaling. With a SD of: ",round(sd(VI_maxes, na.rm = T), digits = 4)))
+    print(paste0("Found and using the max value of ",VI_max, " for scaling. With a SD of: ",round(stats::sd(VI_maxes, na.rm = T), digits = 4)))
     
     #Threshold options
     if(is.numeric(VI_min)){
@@ -96,21 +96,21 @@ orig_time <- terra::time(VI)
       #check NDVI values by LULC
       ##Green
       green_lulc_ndvi <- terra::extract(lulc[lulc$lulc%in%green_lulc], pts)
-      green_lulc_ndvi <- na.omit(green_lulc_ndvi)
+      green_lulc_ndvi <- stats::na.omit(green_lulc_ndvi)
       green_lulc_ndvi$ndvi <- VI_vals[green_lulc_ndvi$id.y]
-      density_green <- density(green_lulc_ndvi$ndvi)
+      density_green <- stats::density(green_lulc_ndvi$ndvi)
       ngreen <- length(green_lulc_ndvi$ndvi)
       ##Water
       water_lulc_ndvi <- terra::extract(lulc[lulc$lulc%in%water_lulc], pts)
-      water_lulc_ndvi <- na.omit(water_lulc_ndvi) #NDVI outside of LULC file or no LULC present.
+      water_lulc_ndvi <- stats::na.omit(water_lulc_ndvi) #NDVI outside of LULC file or no LULC present.
       water_lulc_ndvi$ndvi <- VI_vals[water_lulc_ndvi$id.y]
-      density_water <- density(water_lulc_ndvi$ndvi)
+      density_water <- stats::density(water_lulc_ndvi$ndvi)
       nwater <- length(water_lulc_ndvi$ndvi)
       ##Grey
       grey_lulc_ndvi <- terra::extract(lulc[lulc$lulc%in%grey_lulc], pts)
-      grey_lulc_ndvi <- na.omit(grey_lulc_ndvi)
+      grey_lulc_ndvi <- stats::na.omit(grey_lulc_ndvi)
       grey_lulc_ndvi$ndvi <- VI_vals[grey_lulc_ndvi$id.y]
-      density_grey <- density(grey_lulc_ndvi$ndvi)
+      density_grey <- stats::density(grey_lulc_ndvi$ndvi)
       ngrey <- length(grey_lulc_ndvi$ndvi)
       
       
@@ -174,48 +174,48 @@ orig_time <- terra::time(VI)
       # place to save the figrues
       if(figure){ #standard location. AKA figure == T
         dir.create(paste0("MUST_downloaded_data/",city_name,"/result/VItoDensity/"), recursive = T, showWarnings = F)
-        pdf(file = paste0("MUST_downloaded_data/",city_name,"/result/VItoDensity/",year,"_",VItype,"_thresholds.pdf"), width = 14, height = 6)
+        grDevices::pdf(file = paste0("MUST_downloaded_data/",city_name,"/result/VItoDensity/",year,"_",VItype,"_thresholds.pdf"), width = 14, height = 6)
         }
       #user-specified location
       if(is.character(figure)){
-        pdf(file = paste0(figure,".pdf"), width = 14, height = 6)
+        grDevices::pdf(file = paste0(figure,".pdf"), width = 14, height = 6)
       }
       
       #specify how to panel the plots.
-      par(mfrow = c(1, 2))
+      graphics::par(mfrow = c(1, 2))
       
       # PANEL 1: Histograms
         plot(density_green, col = "forestgreen", lwd = 2, 
              main = paste0("VI Distribution by LULC for ",city_name, " ",year), 
              xlab = "VI", xlim = c(x_min, x_max), ylim = c(0, y_max))
-        polygon(density_green, col = rgb(0.13, 0.55, 0.13, 0.3), border = NA)
+        graphics::polygon(density_green, col = grDevices::rgb(0.13, 0.55, 0.13, 0.3), border = NA)
         
         if(length(grey_lulc_ndvi$ndvi) > 2) {
-          lines(density_grey, col = "darkgrey", lwd = 2)
-          polygon(density_grey, col = rgb(0.66, 0.66, 0.66, 0.3), border = NA)
+          graphics::lines(density_grey, col = "darkgrey", lwd = 2)
+          graphics::polygon(density_grey, col = grDevices::rgb(0.66, 0.66, 0.66, 0.3), border = NA)
         }
         if(length(water_lulc_ndvi$ndvi) > 2) {
-          lines(density_water, col = "dodgerblue", lwd = 2)
-          polygon(density_water, col = rgb(0.12, 0.56, 1, 0.3), border = NA)
+          graphics::lines(density_water, col = "dodgerblue", lwd = 2)
+          graphics::polygon(density_water, col = grDevices::rgb(0.12, 0.56, 1, 0.3), border = NA)
         }
         
         #vertical lines for the thresholds
         #abline(v = thresholdGreen, col = "forestgreen", lty = 2, lwd = 2)
-        abline(v = thresholdGreen_j,col = "darkgreen", lty = 2, lwd  = 2)
-        abline(v = thresholdGreen_w, col = "darkorange", lty = 2, lwd = 2)
-        abline(v = thresholdHigh95, col = "forestgreen", lty = 2, lwd = 2)
+        graphics::abline(v = thresholdGreen_j,col = "darkgreen", lty = 2, lwd  = 2)
+        graphics::abline(v = thresholdGreen_w, col = "darkorange", lty = 2, lwd = 2)
+        graphics::abline(v = thresholdHigh95, col = "forestgreen", lty = 2, lwd = 2)
         #if(exists("thresholdGrey")) abline(v = thresholdGrey, col = "darkgrey", lty = 2, lwd = 2)
         
         #legend
-        legend("topleft", legend = c(paste0("Green, n = ",ngreen),
+        graphics::legend("topleft", legend = c(paste0("Green, n = ",ngreen),
                                      paste0("Grey, n = ",ngrey),
                                      paste0("Blue, n = ",nwater),
                                      paste("95% Sens Threshold = ",round(thresholdHigh95, 3)),
                                      paste("Youden Threshold = ",round(thresholdGreen_j, 3)),
                                      paste("Weighted Youden Threshold =", round(thresholdGreen_w, 3))),
-               fill = c(rgb(0.13, 0.55, 0.13, 0.3),
-                        rgb(0.66, 0.66, 0.66, 0.3),
-                        rgb(0.12, 0.56, 1, 0.3),
+               fill = c(grDevices::rgb(0.13, 0.55, 0.13, 0.3),
+                        grDevices::rgb(0.66, 0.66, 0.66, 0.3),
+                        grDevices::rgb(0.12, 0.56, 1, 0.3),
                         NA, NA, NA),
                border = c("forestgreen", "darkgrey", "dodgerblue", NA, NA, NA),
                col = c(NA, NA, NA, "forestgreen", "darkgreen", "darkorange"),
@@ -230,14 +230,14 @@ orig_time <- terra::time(VI)
         plot(metrics$threshold, metrics$sensitivity, type = "l", col = "forestgreen", lwd = 2,
              ylim = c(min(metrics$youden_j, 0), 1), xlab = "Threshold Value", ylab = "Metric Score",
              main = paste0("Optimization Curves (AUC = ", round(auc_score, 3), ")"))
-        lines(metrics$threshold, metrics$specificity, col = "darkgreen", lwd = 2)
-        lines(metrics$threshold, metrics$youden_j, col = "firebrick", lwd = 2)
-        lines(metrics$threshold, metrics$weighted_j, col = "darkorange", lwd = 2)
-        abline(v = thresholdGreen_j, col = "black", lty = 2, lwd = 1.5)
-        abline(v = thresholdHigh95, col = "darkgreen", lty = 2, lwd = 1.5)
-        abline(v = thresholdGreen_w, col = "darkorange", lty = 2, lwd = 1.5)
+        graphics::lines(metrics$threshold, metrics$specificity, col = "darkgreen", lwd = 2)
+        graphics::lines(metrics$threshold, metrics$youden_j, col = "firebrick", lwd = 2)
+        graphics::lines(metrics$threshold, metrics$weighted_j, col = "darkorange", lwd = 2)
+        graphics::abline(v = thresholdGreen_j, col = "black", lty = 2, lwd = 1.5)
+        graphics::abline(v = thresholdHigh95, col = "darkgreen", lty = 2, lwd = 1.5)
+        graphics::abline(v = thresholdGreen_w, col = "darkorange", lty = 2, lwd = 1.5)
         
-        legend("bottomleft",
+        graphics::legend("bottomleft",
                legend = c(paste0("Sensitivity (", round(opt_sens, 2), ")"),
                           paste0("Specificity (", round(opt_spec, 2), ")"),
                           paste0("Yao / Youden J (", round(opt_j, 2), ")"),
@@ -252,7 +252,7 @@ orig_time <- terra::time(VI)
                y.intersp = 0.8)
 
       
-      dev.off()
+      grDevices::dev.off()
     }
     
     
@@ -298,12 +298,12 @@ orig_time <- terra::time(VI)
       }
       
       #add some attributes
-      metags(output) <- c(w_youden_threshold = thresholdGreen_w) #add attribute of the threshold used.
-      metags(output) <- c(youden_threshold = thresholdGreen_j)
-      metags(output) <- c(threshold_95 = thresholdHigh95)
-      metags(output) <- c(medGrey = median(grey_lulc_ndvi$ndvi))
-      metags(output) <- c(medGreen = median(green_lulc_ndvi$ndvi))
-      metags(output) <- c(medBlue = median(water_lulc_ndvi$ndvi))
+      terra::metags(output) <- c(w_youden_threshold = thresholdGreen_w) #add attribute of the threshold used.
+      terra::metags(output) <- c(youden_threshold = thresholdGreen_j)
+      terra::metags(output) <- c(threshold_95 = thresholdHigh95)
+      terra::metags(output) <- c(medGrey = stats::median(grey_lulc_ndvi$ndvi))
+      terra::metags(output) <- c(medGreen = stats::median(green_lulc_ndvi$ndvi))
+      terra::metags(output) <- c(medBlue = stats::median(water_lulc_ndvi$ndvi))
       
       #save the fcv raster
       if(is.null(save_path)){

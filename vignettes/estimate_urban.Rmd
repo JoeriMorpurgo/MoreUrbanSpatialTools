@@ -1,0 +1,22 @@
+---
+title: "Define the urban border for a municipality"
+author: "Joeri Morpurgo, Leiden University, j.morpurgo@cml.leidenuniv.nl"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Define the urban border for a municipality}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>"
+)
+```
+
+# Development ongoing
+
+```{r setup}
+library(MUST)
+```
