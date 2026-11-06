@@ -15,17 +15,17 @@
 #v2
 mosaic_and_mask <- function(raster_dir, aoi_file, out_file = "mosaic_masked.tif") {
   
-  cat("Reading AOI...\n")
+  cat("Reading AOI...")
   aoi <- terra::vect(aoi_file)
   
-  cat("Listing rasters...\n")
+  cat("Listing rasters...")
   ras_files <- list.files(raster_dir, pattern = "\\.tif$", full.names = TRUE)
   
   if (length(ras_files) == 0) {
     stop("No .tif files found in the directory.")
   }
   
-  cat(length(ras_files), "rasters found. Checking overlaps with AOI...\n")
+  cat(length(ras_files), "rasters found. Checking overlaps with AOI..")
   
   pb <- utils::txtProgressBar(min = 0, max = length(ras_files), style = 3)
   masked_list <- list()
@@ -34,7 +34,7 @@ mosaic_and_mask <- function(raster_dir, aoi_file, out_file = "mosaic_masked.tif"
     r <- terra::rast(ras_files[i])
     r_ext_poly <- terra::as.polygons(terra::ext(r), crs = terra::crs(r))
     
-    if (relate(r_ext_poly, aoi, "intersects")) {
+    if (terra::relate(r_ext_poly, aoi, "intersects")) {
       # Crop and mask *before* storing
       cropped <- terra::crop(r, aoi)
       masked <- terra::mask(cropped, aoi)
@@ -48,12 +48,11 @@ mosaic_and_mask <- function(raster_dir, aoi_file, out_file = "mosaic_masked.tif"
     stop("No rasters overlap with the AOI.")
   }
   
-  cat(length(masked_list), "rasters will be mosaicked...\n")
+  cat(length(masked_list), "rasters will be mosaicked...")
   mos <- do.call(terra::mosaic, masked_list)
   
-  cat("Saving output to:", out_file, "\n")
+  cat("Saving output to:", out_file)
   terra::writeRaster(mos, out_file, overwrite = TRUE)
-  
-  cat("Done!\n")
+
   return(mos)
 }

@@ -18,7 +18,7 @@ build_dhm <- function(dtm, dsm) {
   }
   
   # Interpoleer NAs in DTM
-  if (anyNA(values(dtm))) { #interpolate the NA's
+  if (anyNA(terra::values(dtm))) { #interpolate the NA's
     mask_na <- is.na(dtm)
     dtm_filled <- terra::focal(dtm, w = 3, fun = mean, na.policy = "only", na.rm = TRUE)
     dtm[mask_na] <- dtm_filled[mask_na]

@@ -111,8 +111,8 @@ if(is.null(pre_download_check_result)){ #if there is no file already, run the co
     bladName <- stringr::str_extract(dtm_dirs[i], "(?<=FALSE).*")
     
     #building the dhm
-    dhm <- build_dhm(dtm = rast(list.files(dtm_dirs[i], full.names = T)),
-                     dsm = rast(list.files(dsm_dirs[i], full.names = T)))
+    dhm <- build_dhm(dtm = terra::rast(list.files(dtm_dirs[i], full.names = T)),
+                     dsm = terra::rast(list.files(dsm_dirs[i], full.names = T)))
     
     
     #masking out points that are on buildings
@@ -120,7 +120,7 @@ if(is.null(pre_download_check_result)){ #if there is no file already, run the co
                                                date = date)
     
     #write it away and retrieve later
-    writeRaster(dhm_masked,
+    terra::writeRaster(dhm_masked,
                 file = paste0("MUST_downloaded_data/",city_name,"/AHN/",version,"_dhm_",bladName,".tif"),
                 )
   }

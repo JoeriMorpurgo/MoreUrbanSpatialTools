@@ -15,8 +15,8 @@ temporal_spatial_approximation <- function(stack){
   stackFun <- terra::clamp(stack, lower = 0, upper = 1, values = FALSE)
   
   #calc norm diff
-  diff_stack <- (stackFun[[-1]] - stackFun[[-nlyr(stackFun)]]) / 
-    (stackFun[[-1]] + stackFun[[-nlyr(stackFun)]])
+  diff_stack <- (stackFun[[-1]] - stackFun[[-terra::nlyr(stackFun)]]) / 
+    (stackFun[[-1]] + stackFun[[-terra::nlyr(stackFun)]])
   
   #mean per diff layer
   ##memory intensive for big stack so looping
@@ -46,7 +46,7 @@ temporal_spatial_approximation <- function(stack){
     print(paste0("STATUS: Approximated layer ", i, " with a multiplier of ", round(mult, digits = 3)))
   }
   
-  out_stack <- rast(out_layers)
+  out_stack <- terra::rast(out_layers)
   
   #release memory
   rm(out_layers)

@@ -30,6 +30,8 @@ VItoDensity(
 
 \item{VI}{character or terra rast. Character needs to be one of the follow: c("NDVI", "EVI", "MSAVI") and will retrieve this file. If a rast is provided this will be used as VI input.}
 
+\item{lulc}{spatVect from Terra. A spat vector that contains lulc classes that are present in lulcInfo from the MUST package.}
+
 \item{VI_min}{numeric OR "Dynamic". Numeric (default = 0.25) denotes the minimal threshold value of NDVI to be considered 0\% vegetation coverage. The dynamic option requires LULC to be downloaded and draws random point in LULC that is and isn't green to determine a threshold. This also produces a plot and some extra information. NOTE: The dynamic approach only takes 1 raster layer. Providing a numeric value allows for the processing of a full Stack.}
 
 \item{weight}{numeric. Defaults to 0.75. Weight to be assigned to the Weighted Youden Index.}

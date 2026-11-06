@@ -9,6 +9,8 @@ get_lulc_ohsome(aoi, date)
 \arguments{
 \item{aoi}{SpatRaster, raster, sf or character value. Is the area of interest}
 
+\item{date}{Charater or as.Date. String either containing a year, or a date that is recogninzed by as.Date. Required to pull data from the correct year.}
+
 \item{keyval_df}{dataframe or matrix with 2 columns; 1) key 2) value. This corresponds to Ohsome datastructure.}
 
 \item{year}{numeric value. Indicates the year of the data you request.}

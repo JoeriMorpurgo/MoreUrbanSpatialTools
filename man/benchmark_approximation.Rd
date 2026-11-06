@@ -43,6 +43,8 @@ benchmark_approximation(
 
 \item{verbose}{logical. True to get extra status updates.}
 
+\item{ncore}{integer. Number of cores to be used in calculations}
+
 \item{figure_path}{character. defaults to NULL. Set to path to save a smoothScatter figure between approximate values and true values.}
 }
 \description{

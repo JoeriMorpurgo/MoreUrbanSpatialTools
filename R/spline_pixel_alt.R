@@ -19,7 +19,7 @@ spline_pixel_alt <- function(y){
   
   #fit the spline.
   fit <- tryCatch({
-    splinefun(
+    stats::splinefun(
       x = t[valid_mask], #drop values that are not valid
       y = y[valid_mask], 
       method = "monoH.FC"

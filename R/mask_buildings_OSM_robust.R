@@ -19,7 +19,7 @@ mask_buildings_ohsome_robust <- function(rast, date = "2017-01-01T00:00:00Z") {
   e <- terra::ext(rast)
   bbox <- sf::st_bbox(e)
   bbox <- sf::st_as_sfc(bbox)
-  st_crs(bbox) <- sf::st_crs(rast)
+  sf::st_crs(bbox) <- sf::st_crs(rast)
   
   #failsafe for engineering CRS, tile M_38CN2
   is_engi_crs <- grepl("^ENGCRS", sf::st_crs(bbox)$wkt)
@@ -28,7 +28,7 @@ mask_buildings_ohsome_robust <- function(rast, date = "2017-01-01T00:00:00Z") {
     sf::st_crs(bbox) <- 28992  # Amersfoort / RD New
   }
   
-  bbox <- sf::st_transform(bbox, crs = st_crs("EPSG:4326"))
+  bbox <- sf::st_transform(bbox, crs = sf::st_crs("EPSG:4326"))
   bbox <- sf::st_geometry(bbox)
   bbox <- sf::st_make_valid(bbox)
   
@@ -41,12 +41,12 @@ mask_buildings_ohsome_robust <- function(rast, date = "2017-01-01T00:00:00Z") {
     filter = "building=*"
   )
   
-  print(st_as_text(bbox))
+  print(sf::st_as_text(bbox))
   cat("Sending query to Ohsome")
   
   #Send API req with robust wrapper to retry upon fail  
   buildings_sf_poly <- MUST::robust_api_request(
-    ohsome_post,
+    ohsome::ohsome_post,
     buildings_sf
   )
   
@@ -69,7 +69,7 @@ mask_buildings_ohsome_robust <- function(rast, date = "2017-01-01T00:00:00Z") {
     terra::crs(rast) <- "epsg:28992"  # Amersfoort / RD New
   }
   
-  buildings_vect <- terra::project(buildings_vect, crs(rast))
+  buildings_vect <- terra::project(buildings_vect, terra::crs(rast))
   
   # Mask the raster: remove cells overlapping buildings
   rast_masked <- terra::mask(rast, buildings_vect, inverse = TRUE)

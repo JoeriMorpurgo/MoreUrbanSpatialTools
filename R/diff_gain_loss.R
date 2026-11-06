@@ -24,7 +24,7 @@ diff_gain_loss <- function(raster_stack){
     gains_stack <- terra::rast()
     losses_stack <- terra::rast()
     
-    for (j in c(2:nlyr(baseline))) {
+    for (j in c(2:terra::nlyr(baseline))) {
       prev <- baseline[[j - 1]] #take prev layer
       curr <- baseline[[j]] #Take current layer
       

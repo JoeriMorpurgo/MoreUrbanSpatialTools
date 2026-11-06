@@ -12,6 +12,10 @@ spline_pixel(y, max_gap = 5, max_NA_prop = 0.5, maxVal = NULL, minVal = NULL)
 \item{max_gap}{numeric (defaults to 5). Length of consecutive NA in the vector before interpolation to return the vector directly.}
 
 \item{max_NA_prop}{proportion (defaults to 0.5). Proportion of NA in the vector before interpolation to return vector direclty.}
+
+\item{maxVal}{Numeric (defaults to NULL). Maximum value allowed for interpolation}
+
+\item{minVal}{Numeric (defaults to NULL). Minimum value allowed for interpolation}
 }
 \description{
 NOTE:

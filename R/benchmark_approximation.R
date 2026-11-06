@@ -14,6 +14,7 @@
 #' @param minVal numeric. Minimum value allowed by spline interpolation. Values lower will become minVal.
 #' @param prop_NA numeric (0-1). Defaults to 0.1. Proportion of non-NA cells to artificially mask
 #' @param seed integer. defaults to random, but can be set to be reproducable.
+#' @param ncore integer. Number of cores to be used in calculations
 #' @param verbose logical. True to get extra status updates.
 #' @param figure_path character. defaults to NULL. Set to path to save a smoothScatter figure between approximate values and true values.
 #' @export
@@ -39,7 +40,7 @@ benchmark_approximation <- function(stack,
   if (!is.null(seed)){set.seed(seed)}
   
   # params
-  nlyrs <- nlyr(stack) 
+  nlyrs <- terra::nlyr(stack) 
   stack_NA <- stack #copy
   
   # Track sample positions and true values
@@ -92,7 +93,7 @@ benchmark_approximation <- function(stack,
   }
   
   stack_NA <- stack
-  values(stack_NA) <- mat_vals  # Writes back to the stack in one fast step
+  terra::values(stack_NA) <- mat_vals  # Writes back to the stack in one fast step
   
   #release memory
   mat_vals <- NULL 
@@ -202,10 +203,10 @@ benchmark_approximation <- function(stack,
       mae  <- mean(abs(err))
       rmse <- sqrt(mean(err^2))
       bias <- mean(err) # Over/under-estimation
-      r2   <- suppressWarnings(cor(yp, yt, use = "complete.obs")^2)
+      r2   <- suppressWarnings(stats::cor(yp, yt, use = "complete.obs")^2)
       
       #quantile
-      q_err <- quantile(err, probs = c(0.025, 0.16, 0.84, 0.975), na.rm = TRUE)
+      q_err <- stats::quantile(err, probs = c(0.025, 0.16, 0.84, 0.975), na.rm = TRUE)
       q_2.5  <- q_err["2.5%"]
       q_16   <- q_err["16%"]
       q_84   <- q_err["84%"]
@@ -263,8 +264,8 @@ benchmark_approximation <- function(stack,
   # check performance of the ensemble method
   valid_ens <- !is.na(track_df$y_pred_ensemble) & !is.na(track_df$y_true)
   err_ens <- track_df$y_pred_ensemble[valid_ens] - track_df$y_true[valid_ens]
-  q_ens   <- quantile(err_ens, probs = c(0.025, 0.16, 0.84, 0.975), na.rm = TRUE)
-  results <- results %>% dplyr::add_row(Method = "ensemble",
+  q_ens   <- stats::quantile(err_ens, probs = c(0.025, 0.16, 0.84, 0.975), na.rm = TRUE)
+  results <- results |> dplyr::add_row(Method = "ensemble",
                                  MAE = round(mean(abs(err_ens)),4),
                                  RMSE = round(sqrt(mean(err_ens^2)),4),
                                  Bias = round(mean(err_ens),4),
@@ -272,7 +273,7 @@ benchmark_approximation <- function(stack,
                                  Q16 = round(q_ens["16%"], 4),
                                  Q84= round(q_ens["84%"], 4),
                                  Q97.5 = round(q_ens["97.5%"], 4),
-                                 R2 = round(suppressWarnings(cor(track_df$y_pred_ensemble, track_df$y_true, use = "complete.obs")^2),4)
+                                 R2 = round(suppressWarnings(stats::cor(track_df$y_pred_ensemble, track_df$y_true, use = "complete.obs")^2),4)
                                  )
   row.names(results)[nrow(results)] <- "ensemble" #fix this rowname.
   ######################################
@@ -327,12 +328,12 @@ benchmark_approximation <- function(stack,
       for (i in results$Method) {
         predName <- paste0("y_pred_",i)
         dir.create(paste0(figure_path,"_",i), showWarnings = F, recursive = T) #to make the directory
-        png(file = paste0(figure_path,"_",i,".png"), width = 2000, height = 2000, res = 300)
-        smoothScatter(track_df[[predName]] ~ track_df$y_true,
+        grDevices::png(file = paste0(figure_path,"_",i,".png"), width = 2000, height = 2000, res = 300)
+        graphics::smoothScatter(track_df[[predName]] ~ track_df$y_true,
                       bandwidth = 0.1, nrpoints=10000,
                       xlab = "True Y", ylab = paste0("Predicted Y by ",i),
                       main = i)
-        dev.off()
+        grDevices::dev.off()
       }
   }
   

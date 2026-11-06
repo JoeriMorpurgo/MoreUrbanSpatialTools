@@ -3,9 +3,14 @@
 #' NOTE: 
 #' Literature: Roerink, G. J., Menenti, M., & Verhoef, W. (2000). Reconstructing cloudfree NDVI composites using Fourier analysis of time series. International Journal of Remote Sensing, 21(9), 1911–1917. https://doi.org/10.1080/014311600209814
 #' @param stack stack raster Terra. Stack of rasters that need to be interpolated.
+#' @param cores Numeric. Number of cores to be used in calculations
+#' @param freq Numeric. Number of growth seasons expected
+#' @param max_iter Numeric. Maximum number of iterations for the HANTS algoritm
+#' @param max_gap Numeric. Maximum number of consecutive NA to interpolate values for
+#' @param max_NA_prop Proportion. Maximum proportion of NA before cancelling HANTS interpolation
 #' @export
 #' @examples
-#' PLACEHOLDER()
+#' #PLACEHOLDER
 #' 
 
 ############ HANTS_curve #############

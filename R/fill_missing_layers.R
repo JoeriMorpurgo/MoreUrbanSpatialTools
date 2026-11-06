@@ -1,6 +1,7 @@
 #' Fills in the temporally missing layers in a raster stack on monthly basis.
 #'
 #' @param r A terra SpatRaster object with time information (`terra::time(r)`).
+#' @param interval Character. Expected interval between layers in a stack. Supports month.
 #' @export
 #' @examples
 #' placeholder
@@ -10,7 +11,7 @@
 fill_missing_layers <- function(r, interval = "month") {
   
   # Extract timestamps
-  existing_times <- as.Date(time(r))
+  existing_times <- as.Date(terra::time(r))
   if (all(is.na(existing_times))) {
     stop("The input SpatRaster has no valid time metadata assigned.")
   }
@@ -29,7 +30,7 @@ fill_missing_layers <- function(r, interval = "month") {
   match_sequences <- match(format(time_sequence, "%Y-%m"), format(existing_times, "%Y-%m"))
   
   # Make empty baselayer
-  blank_layer <- rast(r[[1]], vals = NA)
+  blank_layer <- terra::rast(r[[1]], vals = NA)
   
   layer_list <- lapply(match_sequences, function(idx) {
     if (is.na(idx)) {
@@ -39,8 +40,8 @@ fill_missing_layers <- function(r, interval = "month") {
     }
   })
   
-  r_full <- rast(layer_list)
-  time(r_full) <- time_sequence
+  r_full <- terra::rast(layer_list)
+  terra::time(r_full) <- time_sequence
   names(r_full) <- paste0(format(time_sequence, "%Y_%m_%d"))
   
   return(r_full)

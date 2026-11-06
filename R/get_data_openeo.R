@@ -8,7 +8,7 @@
 #' @param city_name character. Name of the city for the data retrieval
 #' @param startdate date. Start of the requesting images
 #' @param enddate date. End of the requesting images
-#' @param sattelite character value. Sentinel or (future; Landsat)
+#' @param satellite character value. Sentinel or (future; Landsat)
 #' @param indicator Character value; NDVI (future; EVI or LST)
 #' @param method Character value. max, 90th, median, monthly_max, monthly_90th, monthly_median or none (for all images). 90th indicates the 90th percentile of a pixel value over the time period. Note: none will retrieve massive amounts of images.
 #' @param cloud_threshold numeric. Standard at 50. 

@@ -64,10 +64,10 @@ if(is.null(pre_download_check_result)){ #if there is no file already, run the co
   for(q in windowSize){
   
     #closing small gaps
-    w_close <- focalMat(urbanLULCrast, d = gb_dist, type = "circle") #weighted focal matrix
+    w_close <- terra::focalMat(urbanLULCrast, d = gb_dist, type = "circle") #weighted focal matrix
     w_close <- ifelse(w_close > 0, 1, NA) #binary matrix
-    dilated <- focal(urbanLULCrast, w = w_close, fun = "max", na.rm = T)
-    closed <- focal(dilated, w = w_close, fun = "min", na.rm = T)
+    dilated <- terra::focal(urbanLULCrast, w = w_close, fun = "max", na.rm = T)
+    closed <- terra::focal(dilated, w = w_close, fun = "min", na.rm = T)
     
     #moving window
     urbanBorder <- terra::focal(closed, w = q, fun = "mean", expand = T)
@@ -81,11 +81,11 @@ if(is.null(pre_download_check_result)){ #if there is no file already, run the co
       names(urbanBorder) <- bufferSize
       #save object
       assign(paste0("urbanBorderVect",bufferSize),
-             fillHoles(as.polygons(urbanBorder)))#from raster to border vector
+             terra::fillHoles(terra::as.polygons(urbanBorder)))#from raster to border vector
   }
   
   #put in 1 file
-  urbanBorderVect <- vect(c(mget(ls()[grep("urbanBorderVect",ls())])))
+  urbanBorderVect <- terra::vect(c(mget(ls()[grep("urbanBorderVect",ls())])))
   
   #name for saving object
   fileWindowName <- stringr::str_flatten(as.character(bufferSize))

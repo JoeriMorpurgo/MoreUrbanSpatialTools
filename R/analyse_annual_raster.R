@@ -1,10 +1,10 @@
 analyze_annual_raster <- function(r_current, r_prior = NULL, veg_threshold = 0.3) {
-  cell_area <- prod(res(r_current)) # Cell area in m^2
-  total_cells <- ncell(r_current) - freq(is.na(r_current))[2, "count"]
+  cell_area <- base::prod(terra::res(r_current)) # Cell area in m^2
+  total_cells <- terra::ncell(r_current) - terra::freq(is.na(r_current))[2, "count"]
   total_area <- total_cells * cell_area
   
   # A. Base Coverage Metrics
-  base_cov_abs <- sum(values(r_current), na.rm = TRUE) * cell_area # Absolute green area
+  base_cov_abs <- sum(terra::values(r_current), na.rm = TRUE) * cell_area # Absolute green area
   base_cov_prop <- base_cov_abs / total_area #green area proportional to the total area
   
   # B. Annual Change Metrics (requires prior year raster)
@@ -16,7 +16,7 @@ analyze_annual_raster <- function(r_current, r_prior = NULL, veg_threshold = 0.3
   
   if (!is.null(r_prior)) {
     diff_r <- r_current - r_prior
-    diff_vals <- values(diff_r)
+    diff_vals <- terra::values(diff_r)
     
     # Absolute Loss, Gain, Difference (m^2)
     diff_abs <- sum(diff_vals, na.rm = TRUE) * cell_area
@@ -30,7 +30,7 @@ analyze_annual_raster <- function(r_current, r_prior = NULL, veg_threshold = 0.3
     inverseRast <- patches
     inverseRast[is.na(inverseRast)] <- -9999
     inverseRast[inverseRast>-.1] <- NA
-    distRast <- distance(inverseRast) #distance to cell with value
+    distRast <- terra::distance(inverseRast) #distance to cell with value
 
     distdf <- data.frame(i = numeric(),
                distPos = numeric(),
@@ -48,7 +48,7 @@ analyze_annual_raster <- function(r_current, r_prior = NULL, veg_threshold = 0.3
       mean_dist_neg_change <- mean((distRast[neg_change_r]), na.rm = T)
       sum_dist_neg_change <- sum(diff_r[neg_change_r], na.rm = T)
       
-      distdf <- distdf %>% add_row(i = i,
+      distdf <- distdf |> dplyr::add_row(i = i,
                                    i_end = i+0.1,
                                    distPos = mean_dist_pos_change,
                                    distNeg = mean_dist_neg_change,
@@ -59,27 +59,27 @@ analyze_annual_raster <- function(r_current, r_prior = NULL, veg_threshold = 0.3
 
     #plot
     if(!is.null(figure)){
-    pdf(file = paste0(figure,"/test.pdf"))
+    grDevices::pdf(file = paste0(figure,"/test.pdf"))
     plot(distdf$i, distdf$distPos, type = "n", ylim = c(min(c(distdf$distPos, distdf$distNeg), na.rm = T),
                                                             max(c(distdf$distPos, distdf$distNeg), na.rm = T)),
          xlab = "Vegetation difference threshold", ylab = "Mean distance to border (m)")
     
     #lines
-    lines(distdf$i, distdf$distPos, type = "p", col = "darkgreen")
-    lines(distdf$i, distdf$distNeg, type = "p", col = "darkred")
+    graphics::lines(distdf$i, distdf$distPos, type = "p", col = "darkgreen")
+    graphics::lines(distdf$i, distdf$distNeg, type = "p", col = "darkred")
     #legend
-    legend("topright", legend = c("Positive changes", "Negative changes"),
+    grpahics::legend("topright", legend = c("Positive changes", "Negative changes"),
            col = c("darkgreen", "darkred"), pch = 1)
-    dev.off()
+    grDevices::dev.off()
     }
     
   }
   
   # C. Landscape Metrics (Requires binary patch raster)
   binary_r <- r_current >= veg_threshold
-  lpi <- lsm_l_lpi(binary_r)$value
-  ai <- lsm_l_ai(binary_r)$value
-  edge_ratio <- lsm_l_ed(binary_r)$value # Edge Density (m/ha)
+  lpi <- landscapemetrics::lsm_l_lpi(binary_r)$value
+  ai <- landscapemetrics::lsm_l_ai(binary_r)$value
+  edge_ratio <- landscapemetrics::lsm_l_ed(binary_r)$value # Edge Density (m/ha)
   
   return(data.frame(
     total_area_m2 = total_area,

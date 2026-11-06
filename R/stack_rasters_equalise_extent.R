@@ -14,7 +14,7 @@
 stack_rasters_equalise_extent <- function(rasterFiles) {
   
   # Load all rasters
-  rasters <- lapply(rasterFiles, rast)
+  rasters <- lapply(rasterFiles, terra::rast)
   
   # Check that CRS are the same
   crs_list <- sapply(rasters, terra::crs)

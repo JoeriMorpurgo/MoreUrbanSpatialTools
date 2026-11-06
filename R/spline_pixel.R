@@ -3,6 +3,8 @@
 #' NOTE: 
 #' Literature: 
 #' @param y numeric vector. Time series for spline interpolation
+#' @param maxVal Numeric (defaults to NULL). Maximum value allowed for interpolation
+#' @param minVal Numeric (defaults to NULL). Minimum value allowed for interpolation
 #' @param max_gap numeric (defaults to 5). Length of consecutive NA in the vector before interpolation to return the vector directly.
 #' @param max_NA_prop proportion (defaults to 0.5). Proportion of NA in the vector before interpolation to return vector direclty.
 #' @export
@@ -26,7 +28,7 @@ spline_pixel <- function(y, max_gap = 5, max_NA_prop = 0.5, maxVal = NULL, minVa
 
   #fit the spline.
   fit <- tryCatch({
-    smooth.spline(
+    stats::smooth.spline(
     x = t[valid_mask], #drop values that are not valid
     y = y[valid_mask]
   )
@@ -37,7 +39,7 @@ spline_pixel <- function(y, max_gap = 5, max_NA_prop = 0.5, maxVal = NULL, minVa
     return(rep(NA, length(y)))
   }
   
-  predictions <- predict(fit, t)$y #make predictions
+  predictions <- stats::predict(fit, t)$y #make predictions
   
   #clamp
   if(!is.null(maxVal)){predictions[predictions > maxVal] <- maxVal}

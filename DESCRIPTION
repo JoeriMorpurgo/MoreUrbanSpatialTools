@@ -16,6 +16,8 @@ LazyData: true
 Imports: 
     dplyr,
     fasterize,
+    graphics,
+    grDevices,
     jsonlite,
     lubridate,
     ohsome,
@@ -23,6 +25,7 @@ Imports:
     osmdata,
     raster,
     sf,
+    stats,
     stringr,
     terra,
     xfun

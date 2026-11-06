@@ -8,6 +8,8 @@ fill_missing_layers(r, interval = "month")
 }
 \arguments{
 \item{r}{A terra SpatRaster object with time information (\code{terra::time(r)}).}
+
+\item{interval}{Character. Expected interval between layers in a stack. Supports month.}
 }
 \value{
 The stack with NA for missing layers.
