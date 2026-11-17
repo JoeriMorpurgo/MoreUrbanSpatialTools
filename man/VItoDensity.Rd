@@ -15,6 +15,7 @@ VItoDensity(
   VI,
   lulc = NULL,
   VI_min = 0.25,
+  VI_max = NULL,
   weight = 0.75,
   maskLayer = NULL,
   m2 = F,
@@ -34,6 +35,8 @@ VItoDensity(
 
 \item{VI_min}{numeric OR "Dynamic". Numeric (default = 0.25) denotes the minimal threshold value of NDVI to be considered 0\% vegetation coverage. The dynamic option requires LULC to be downloaded and draws random point in LULC that is and isn't green to determine a threshold. This also produces a plot and some extra information. NOTE: The dynamic approach only takes 1 raster layer. Providing a numeric value allows for the processing of a full Stack.}
 
+\item{VI_max}{Proportion (defaults to NULL). Defaults to the max present in the VI raster present. Alternatively, user may provide a value between 0-1. This should always be higher than VI_min.}
+
 \item{weight}{numeric. Defaults to 0.75. Weight to be assigned to the Weighted Youden Index.}
 
 \item{maskLayer}{spatVector. Object to mask the VI raster by.}
@@ -51,6 +54,6 @@ NOTE:
 Literature: Carlson, T. N., & Ripley, D. A. (1997). On the relation between NDVI, fractional vegetation cover, and leaf area index. Remote Sensing of Environment, 62(3), 241–252. https://doi.org/10.1016/S0034-4257(97)00104-1; Li, D., Shen, F., Yin, Y., Peng, J., & Chen, P. (2013). Weighted Youden index and its two-independent-sample comparison based on weighted sensitivity and specificity. Chinese Medical Journal, 126(6), 1150–1154. https://doi.org/10.3760/cma.j.issn.0366-6999.20123102
 }
 \examples{
-PLACEHOLDER()
+#PLACEHOLDER
 
 }

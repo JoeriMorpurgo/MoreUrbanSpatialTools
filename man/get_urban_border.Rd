@@ -18,7 +18,7 @@ get_urban_border(
 \arguments{
 \item{city_name}{character value. Name of a city. This should correspond exactly to the name used in other functions of the package.}
 
-\item{date}{character value. Which date/time to retrieve the snapshot from Ohsome}
+\item{date}{character value. Which date/time to retrieve data from cache.}
 
 \item{bufferSize}{numeric value. Defaults to 500, user input needs to be divisible by 10. This indicate meters size of the circular moving average window to define urban border.}
 

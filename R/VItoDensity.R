@@ -11,6 +11,7 @@
 #' @param date character. The year of the VI (and optionally LULC-map) to consider. Works only with YYYY-MM-DD format. or numeric year as YYYY format.
 #' @param VI character or terra rast. Character needs to be one of the follow: c("NDVI", "EVI", "MSAVI") and will retrieve this file. If a rast is provided this will be used as VI input.
 #' @param VI_min numeric OR "Dynamic". Numeric (default = 0.25) denotes the minimal threshold value of NDVI to be considered 0% vegetation coverage. The dynamic option requires LULC to be downloaded and draws random point in LULC that is and isn't green to determine a threshold. This also produces a plot and some extra information. NOTE: The dynamic approach only takes 1 raster layer. Providing a numeric value allows for the processing of a full Stack.
+#' @param VI_max Proportion (defaults to NULL). Defaults to the max present in the VI raster present. Alternatively, user may provide a value between 0-1. This should always be higher than VI_min. 
 #' @param lulc spatVect from Terra. A spat vector that contains lulc classes that are present in lulcInfo from the MUST package.
 #' @param weight numeric. Defaults to 0.75. Weight to be assigned to the Weighted Youden Index. 
 #' @param figure logical or path. Defaults to FALSE to not save a figure. TRUE save figure in the results folder where it shows A) distributions of values for green, grey and blue classes and the calculated threshold and B) Optimization curves with specificity, sensitivity and curves for (weighted) Youden Index. Alternatively, a path can be given to store the figure there.
@@ -28,7 +29,8 @@ VItoDensity <- function(city_name,
                           date = NULL,
                           VI,
                           lulc = NULL,
-                          VI_min = 0.25, #minimum level of NDVI to be considered green
+                          VI_min = 0.25, #minimum value of VI to be consider vegetation coverage
+                          VI_max = NULL,
                           weight = 0.75,
                           maskLayer = NULL,
                           m2 = F, #Which calc to do
@@ -61,9 +63,11 @@ orig_time <- terra::time(VI)
      
     
     #Calc max NDVI
+    if(is.null(VI_max)){ #If no VI_max provided by the user take the max from the raster.
     VI_maxes <- as.numeric(unlist(terra::global(VI, fun = "max", na.rm = T)))
     VI_max <- max(VI_maxes, na.rm=T)
-    print(paste0("Found and using the max value of ",VI_max, " for scaling. With a SD of: ",round(stats::sd(VI_maxes, na.rm = T), digits = 4)))
+    print(paste0("Found and using the max value of ",round(VI_max, digits = 4), " for scaling. With a SD of: ",round(stats::sd(VI_maxes, na.rm = T), digits = 4)))
+    }
     
     #Threshold options
     if(is.numeric(VI_min)){

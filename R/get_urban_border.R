@@ -4,7 +4,7 @@
 #' NOTE: 
 #' Literature: 
 #' @param city_name character value. Name of a city. This should correspond exactly to the name used in other functions of the package.
-#' @param date character value. Which date/time to retrieve the snapshot from Ohsome
+#' @param date character value. Which date/time to retrieve data from cache.
 #' @param bufferSize numeric value. Defaults to 500, user input needs to be divisible by 10. This indicate meters size of the circular moving average window to define urban border.
 #' @param thresholdUrban numeric proportional value. Between 0-1 (defaults to 0.5). This value indicates the threshold proportion for the moving window to be considered urban. i.e. 0.5 will classify a cell as urban when 50% of the cells from the buffer are classified as urban.
 #' @param gap_bridge_distance numeric value. Defaults to 1000, user input needs to be divisible by 10. Indicating meters, that borders will grow and shrink with the intend to close gaps. The basic value of this is 1000 (1km), which relates to approx 15min walking. This makes strips of lands classified as non-urban in the city (parks, nature reserves, etc.) that span 2 km urban, but does not affect anything else.
@@ -29,7 +29,7 @@ get_urban_border <- function(city_name = NULL,
                               ){
 
 #date to year  transformation
-if(is.character(date)){dateYear <- lubridate::year(as.POSIXct(date))}else{dateYear <- date}
+if(is.character(date)){dateYear <- lubridate::year(as.POSIXct(date, format = "%Y"))}else{dateYear <- date}
   
 #Check if we already have this data downloaded
 if(is.character(city_name) & is.character(date)){

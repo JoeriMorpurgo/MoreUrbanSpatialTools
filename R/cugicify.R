@@ -43,7 +43,7 @@ veg_coverage[veg_coverage > 1] <- 1
 
 #prep vegation structure
 veg_structure <- terra::project(veg_structure, terra::crs(veg_coverage))
-if(is(veg_structure, "SpatRaster"){ #if dhm
+if(is(veg_structure, "SpatRaster")){ #if dhm
   grass  <- veg_structure <= 1
   grass <- as.numeric(grass)
   grass <- terra::resample(grass, veg_coverage) #asess propotional grass cov.
@@ -55,7 +55,7 @@ if(is(veg_structure, "SpatRaster"){ #if dhm
   wooded <- terra::resample(wooded, veg_coverage)
 }
 
-if(is(veg_structure, "SpatVector"){ #if from lulc
+if(is(veg_structure, "SpatVector")){ #if from lulc
   veg_r <- terra::project(veg_structure, veg_coverage)
   veg_r <- terra::rasterize(veg_r, veg_coverage, field="CUGIC_height") #might need to be flipped?
   
