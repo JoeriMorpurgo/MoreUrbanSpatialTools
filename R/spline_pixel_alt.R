@@ -5,7 +5,7 @@
 #' @param y numeric vector. Time series for spline interpolation
 #' @export
 #' @examples
-#' PLACEHOLDER()
+#' #PLACEHOLDER()
 #' 
 
 ############ smooth spline #############

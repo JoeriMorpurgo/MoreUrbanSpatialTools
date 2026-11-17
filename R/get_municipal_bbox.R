@@ -7,7 +7,7 @@
 #' @param OSM_check logical. Standard is FALSE. When true it also retrieves the bbox from OSM and merges the two bboxes. This can be helpful when the lat/long are flipped. However, the OSM API tends to be more picky in rejecting requests and is therefor this argument defaults to F.
 #' @export
 #' @examples
-#' PLACEHOLDER()
+#' #PLACEHOLDER()
 #' 
 
 ############ get_municipal_bbox #############

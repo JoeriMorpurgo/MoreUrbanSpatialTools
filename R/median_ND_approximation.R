@@ -1,15 +1,15 @@
-#' Temporal interpolation based on median normalized difference between two layers. This approach assumes both only positive values and constant effect across all cells. 
+#' Interpolation based on median normalized difference between two layers. 
 #'
 #' NOTE: 
 #' Literature: 
 #' @param stack spat raster stack. Stack of rasters to be interpolated
 #' @export
 #' @examples
-#' PLACEHOLDER()
+#' #PLACEHOLDER()
 #' 
 
 ############ temporal interpolation by spatial patterns #############
-temporal_spatial_approximation <- function(stack){
+median_ND_approximation <- function(stack){
   
   #clamp values
   stackFun <- terra::clamp(stack, lower = 0, upper = 1, values = FALSE)
@@ -35,11 +35,11 @@ temporal_spatial_approximation <- function(stack){
   multipliers <- (1 + median) / (1 - median)
   
   #list for calcs
-  out_layers <- vector("list", nlyr(stack))
+  out_layers <- vector("list", terra::nlyr(stack))
   out_layers[[1]] <- stack[[1]]
   
   #impute
-  for (i in 2:nlyr(stack)) {
+  for (i in 2:terra::nlyr(stack)) {
     mult <- multipliers[i - 1]
     imputed <- out_layers[[i - 1]] * mult
     out_layers[[i]] <- terra::cover(stack[[i]], imputed)

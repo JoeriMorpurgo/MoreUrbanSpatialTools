@@ -1,4 +1,5 @@
-analyze_annual_raster <- function(r_current, r_prior = NULL, veg_threshold = 0.3) {
+analyze_annual_raster <- function(r_current, r_prior = NULL,
+                                  veg_threshold = 0.3, figurePath = F) {
   cell_area <- base::prod(terra::res(r_current)) # Cell area in m^2
   total_cells <- terra::ncell(r_current) - terra::freq(is.na(r_current))[2, "count"]
   total_area <- total_cells * cell_area
@@ -58,8 +59,8 @@ analyze_annual_raster <- function(r_current, r_prior = NULL, veg_threshold = 0.3
     }
 
     #plot
-    if(!is.null(figure)){
-    grDevices::pdf(file = paste0(figure,"/test.pdf"))
+    if(figurePath){
+    grDevices::pdf(file = paste0(figurePath,"/test.pdf"))
     plot(distdf$i, distdf$distPos, type = "n", ylim = c(min(c(distdf$distPos, distdf$distNeg), na.rm = T),
                                                             max(c(distdf$distPos, distdf$distNeg), na.rm = T)),
          xlab = "Vegetation difference threshold", ylab = "Mean distance to border (m)")
@@ -68,7 +69,7 @@ analyze_annual_raster <- function(r_current, r_prior = NULL, veg_threshold = 0.3
     graphics::lines(distdf$i, distdf$distPos, type = "p", col = "darkgreen")
     graphics::lines(distdf$i, distdf$distNeg, type = "p", col = "darkred")
     #legend
-    grpahics::legend("topright", legend = c("Positive changes", "Negative changes"),
+    graphics::legend("topright", legend = c("Positive changes", "Negative changes"),
            col = c("darkgreen", "darkred"), pch = 1)
     grDevices::dev.off()
     }

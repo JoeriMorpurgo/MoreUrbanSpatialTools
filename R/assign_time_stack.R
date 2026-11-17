@@ -4,14 +4,14 @@
 #' @keywords stack, openEO, time
 #' @export
 #' @examples
-#' PLACEHOLDER()
+#' #PLACEHOLDER()
 #' 
 #' 
 assign_time_stack <- function(rastStack){
 
 days_since_1990 <- as.numeric(gsub("var_t=", "", names(rastStack)))
 raster_dates <- as.Date("1990-01-01") + days_since_1990
-time(rastStack) <- raster_dates
+terra::time(rastStack) <- raster_dates
 
 return(rastStack)
 

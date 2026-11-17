@@ -22,6 +22,6 @@ NOTE:
 Literature:
 }
 \examples{
-PLACEHOLDER()
+#PLACEHOLDER()
 
 }

@@ -10,7 +10,7 @@
 #' @keywords classification, height, proportion
 #' @export
 #' @examples
-#' classify_height()
+#' #classify_height()
 #' 
 
 

@@ -19,7 +19,7 @@
 #' @param figure_path character. defaults to NULL. Set to path to save a smoothScatter figure between approximate values and true values.
 #' @export
 #' @examples
-#' PLACEHOLDER()
+#' #PLACEHOLDER()
 #' 
 
 ############ get_municipal_bbox #############
@@ -168,7 +168,7 @@ benchmark_approximation <- function(stack,
       if(verbose){message("Evaluating: Normalized Difference approximation")}  
       
       #spat interpolation
-      stack_pred_ND <- temporal_spatial_approximation(stack_NA)
+      stack_pred_ND <- median_ND_approximation(stack_NA)
       
       # Extract predicted values at the sampled cell/layer positions
       track_df$y_pred_ND <- 0

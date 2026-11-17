@@ -19,7 +19,7 @@ NOTE:
 Literature: CUGIC: The Consolidated Urban Green Infrastructure Classification for assessing ecosystem services and biodiversity, https://doi.org/10.1016/j.landurbplan.2023.104726
 }
 \examples{
-classify_height()
+#classify_height()
 
 }
 \keyword{classification,}

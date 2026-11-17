@@ -17,7 +17,7 @@ NOTE:
 Literature:
 }
 \examples{
-diff_gain_loss()
+#diff_gain_loss()
 
 }
 \keyword{classification,}

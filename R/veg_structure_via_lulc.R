@@ -7,7 +7,7 @@
 #' @keywords OSM, Ohsome, Land-use, Land-cover, historic
 #' @export
 #' @examples
-#' PLACEHOLDER()
+#' #PLACEHOLDER()
 #' 
 
 veg_structure_via_lulc <- function(lulc_map,

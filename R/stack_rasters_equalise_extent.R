@@ -7,7 +7,7 @@
 #' @keywords classification, height, proportion
 #' @export
 #' @examples
-#' mask_buildings_ohsome_robust()
+#' #mask_buildings_ohsome_robust()
 #' 
 
 #################### stack_rasters_equalise_extent() ##########

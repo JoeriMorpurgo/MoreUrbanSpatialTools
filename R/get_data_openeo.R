@@ -15,7 +15,7 @@
 #' @keywords API, Remote Sensing, Indicators, openEO
 #' @export
 #' @examples
-#' get_openeo_data()
+#' #get_openeo_data()
 #' 
 
 get_data_openeo <- function(aoi, #some aoi object/border

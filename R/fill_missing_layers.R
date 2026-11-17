@@ -3,10 +3,9 @@
 #' @param r A terra SpatRaster object with time information (`terra::time(r)`).
 #' @param interval Character. Expected interval between layers in a stack. Supports month.
 #' @export
-#' @examples
-#' placeholder
 #' @return The stack with NA for missing layers.
-#' #' PLACEHOLDER()
+#' @examples 
+#' #PLACEHOLDER()
 
 fill_missing_layers <- function(r, interval = "month") {
   

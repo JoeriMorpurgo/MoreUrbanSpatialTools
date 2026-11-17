@@ -6,7 +6,7 @@
 #' @keywords Height model
 #' @export
 #' @examples
-#' build_dhm()
+#' #build_dhm()
 
 
 #Function to calc DHM

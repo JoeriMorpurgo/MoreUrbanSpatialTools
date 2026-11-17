@@ -23,6 +23,8 @@ HANTS_stack(
 
 \item{max_iter}{Numeric. Maximum number of iterations for the HANTS algoritm}
 
+\item{tolerance}{Numeric. Numeric distance allowed between the prediction and actual value. If larger than tolerance, the value is rejected.}
+
 \item{max_gap}{Numeric. Maximum number of consecutive NA to interpolate values for}
 
 \item{max_NA_prop}{Proportion. Maximum proportion of NA before cancelling HANTS interpolation}

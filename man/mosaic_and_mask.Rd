@@ -19,7 +19,7 @@ NOTE:
 Literature:
 }
 \examples{
-mosaic_and_mask()
+#mosaic_and_mask()
 
 }
 \keyword{classification,}

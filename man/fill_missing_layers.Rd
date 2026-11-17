@@ -13,11 +13,10 @@ fill_missing_layers(r, interval = "month")
 }
 \value{
 The stack with NA for missing layers.
-#' PLACEHOLDER()
 }
 \description{
 Fills in the temporally missing layers in a raster stack on monthly basis.
 }
 \examples{
-placeholder
+#PLACEHOLDER()
 }

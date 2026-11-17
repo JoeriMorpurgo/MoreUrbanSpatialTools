@@ -22,7 +22,7 @@ NOTE:
 Literature:
 }
 \examples{
-robust_api_request()
+#robust_api_request()
 
 }
 \keyword{classification,}

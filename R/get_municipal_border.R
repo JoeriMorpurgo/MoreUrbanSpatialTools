@@ -4,17 +4,15 @@
 #' NOTE: 
 #' Literature: 
 #' @param city_name character value. name of a city to retrieve the bbox for.
-#' @param historic TRUE or FALSE. Wether to use Ohsome or OSM
 #' @param date date/time. Which point in time to retrieve data from Ohsome
 #' @export
 #' @examples
-#' PLACEHOLDER()
+#' #PLACEHOLDER()
 #' 
 
 
 ############################ get_municipal_border #################
 get_municipal_border <- function(city_name,
-                                 historic = FALSE,
                                  date = NULL) {
 
 #date to year  transformation
@@ -27,8 +25,6 @@ if(is.null(pre_download_check_result)){ #if there is no file already, run the co
   
   
 
-  #Historic or current border?
-  if(historic){  #Historic Ohsome data
     
           #bbox
           city_bbox <- MUST::get_municipal_bbox(city_name)
@@ -36,22 +32,49 @@ if(is.null(pre_download_check_result)){ #if there is no file already, run the co
           city_bbox <- sf::st_make_valid(city_bbox)
           Sys.sleep(1)
           
+          
                 #Robust API query
                 #sometimes municipal borders are on different levels so have it check them iteratively.
                 for (level in c(8,7,6)) {
                   
-                  #query itself  
-                  query <- ohsome::ohsome_elements_geometry(
-                    boundary = city_bbox, 
-                    filter = paste0("boundary=administrative and admin_level=",level), 
-                    time = date,
-                    properties = "tags", 
-                    clipGeometry = F)
-                  
-                    #Send request
-                    message("querying OHSOME for municipal borders")
-                    res <- ohsome::ohsome_post(query, validate = T, strict = T) 
+                  ### V1 OHSOME API REQUEST ###
+                  # #query itself  
+                  # query <- ohsome::ohsome_elements_geometry(
+                  #   boundary = city_bbox, 
+                  #   filter = paste0("boundary=administrative and admin_level=",level), 
+                  #   time = date,
+                  #   properties = "tags", 
+                  #   clipGeometry = F)
+                  # 
+                  #   #Send request
+                  #   message("querying OHSOME for municipal borders")
+                  #   res <- ohsome::ohsome_post(query, validate = T, strict = T) 
                     
+                  ### V2 OHSOME API REQUEST ###
+                  payload <- list(
+                    filter = paste0("boundary=administrative and admin_level=", level),
+                    aoi    = as.numeric(sf::st_bbox(city_bbox)),
+                    time   = date,      # ISO-8601 string, e.g., "2024-01-01"
+                    clip   = FALSE 
+                  )
+                  tmp_parquet <- tempfile(fileext = ".parquet")
+                  
+                  message("querying OHSOME v2 for municipal borders")
+                  resp <- httr2::request("https://api.heigit.org/ohsome-api/v2/extraction/features.parquet") |>
+                    httr2::req_headers(
+                              "Authorization" = get_ohsome_key(), 
+                              "Content-Type"  = "application/json"
+                            ) |>
+                    httr2::req_body_json(payload) |>
+                    httr2::req_retry(max_tries = 1, max_seconds = 180) |>
+                    httr2::req_perform(path = tmp_parquet)
+                  
+                  #pull from storage
+                  res <- arrow::read_parquet(resp$body) #translate to legacy output
+                  res$geometry <- sf::st_as_sfc(res$geom, crs = 4326)
+                  res$geom <- NULL
+                  res <- sf::st_as_sf(res)
+                  
                     #check if we have a result
                     if(nrow(res)>0){break}else{cat("No result for query on administrative level ", level)}
                 }
@@ -62,14 +85,15 @@ if(is.null(pre_download_check_result)){ #if there is no file already, run the co
           max_dist = 0.95
           element <- integer(0)
           city <- sub(",.*", "", city_name)
-          if(city %in% res$name){element <- which(res$name %in% city)
+          element_names <- sapply(res$tags, function(t) t$value[t$key == "name"][1])
+          if(city %in% element_names){element <- which(element_names %in% city)
             }else{
-              while (length(element) == 0 && max_dist > 0) {
+              while (length(element_names) == 0 && max_dist > 0) {
                 max_dist <- max_dist - 0.05
-                element <- agrep(tolower(city), tolower(res$name), max.distance = max_dist, value = F)
+                element <- agrep(tolower(city), tolower(element_names), max.distance = max_dist, value = F)
               }
               if (length(element) > 1) {
-                d <- utils::adist(tolower(city), tolower(res$name[element]))
+                d <- utils::adist(tolower(city), tolower(element_names[element]))
                 element <- element[which.min(d)]
               }
             }
@@ -80,51 +104,6 @@ if(is.null(pre_download_check_result)){ #if there is no file already, run the co
           admin_border <- geometry$geometry
           admin_border <- sf::st_sf(geometry = admin_border)
           
-  }else{ 
-    
-          #Current OSM data
-          city_bbox <- osmdata::getbb(city_name)
-          
-
-          #Query
-          message("API request OSM border")
-          query <- osmdata::opq(bbox = city_bbox) |>
-            osmdata::add_osm_feature(key = "boundary", value = "administrative") |>
-            osmdata::add_osm_feature(key = "admin_level", value = "8")
-          
-          # Send the request robustly
-          admin_border <- MUST::robust_api_request(
-            osm_function = osmdata_sf,  # function to call
-            q = query,                   # the opq query object
-            quiet = FALSE                # optional argument to osmdata_sf
-          )
-          
-          
-          message("Received borders")
-          admin_border <- admin_border$osm_multipolygons
-          
-          #Code to select best fit for city.... This is a bit roundabout but OK....
-          max_dist = 0.9
-          element <- integer(0) #This is terrible coding. But works.
-          city <- sub(",.*", "", city_name)
-          if(city %in% admin_border$name){element <- which(admin_border$name %in% city)} else{
-            while (length(element) == 0 && max_dist > 0) {
-              max_dist <- max_dist - 0.05
-              element <- agrep(tolower(city_name), tolower(admin_border$name), max.distance = max_dist, value = F)
-              print(element)
-            }
-            if (length(element) > 1) {
-              d <- utils::adist(tolower(city), tolower(admin_border$name[element]))
-              element <- element[which.min(d)]
-            }
-          }
-          message(admin_border$name[element])
-          
-          
-          geometry <- admin_border[element,]
-          admin_border <- sf::st_geometry(geometry) #Just the geometry
-    
-  }
   
   #save the result
   base::saveRDS(admin_border,

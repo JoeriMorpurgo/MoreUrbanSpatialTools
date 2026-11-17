@@ -15,7 +15,7 @@ NOTE:
 Literature:
 }
 \examples{
-mask_buildings_ohsome_robust()
+#mask_buildings_ohsome_robust()
 
 }
 \keyword{classification,}

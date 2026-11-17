@@ -9,7 +9,7 @@
 #' @param max_NA_prop proportion (defaults to 0.5). Proportion of NA in the vector before interpolation to return vector direclty.
 #' @export
 #' @examples
-#' PLACEHOLDER()
+#' #PLACEHOLDER()
 #' 
 
 ############ smooth spline #############

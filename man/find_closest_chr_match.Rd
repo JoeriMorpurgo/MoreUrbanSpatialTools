@@ -20,7 +20,7 @@ NOTE:
 Literature:
 }
 \examples{
-find_closest_chr_match()
+#find_closest_chr_match()
 
 }
 \keyword{similarity}

@@ -4,12 +4,10 @@
 \alias{get_municipal_border}
 \title{Retrieve current or historic municipal border limited to annual temporal resolution}
 \usage{
-get_municipal_border(city_name, historic = FALSE, date = NULL)
+get_municipal_border(city_name, date = NULL)
 }
 \arguments{
 \item{city_name}{character value. name of a city to retrieve the bbox for.}
-
-\item{historic}{TRUE or FALSE. Wether to use Ohsome or OSM}
 
 \item{date}{date/time. Which point in time to retrieve data from Ohsome}
 }
@@ -19,6 +17,6 @@ NOTE:
 Literature:
 }
 \examples{
-PLACEHOLDER()
+#PLACEHOLDER()
 
 }

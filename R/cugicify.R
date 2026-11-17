@@ -12,7 +12,7 @@
 #' @keywords classification, height, proportion
 #' @export
 #' @examples
-#' make_cugic()
+#' #make_cugic()
 #' 
 
 cugicify <- function(city_name, date,
@@ -30,7 +30,7 @@ if(is.null(pre_download_check_result)){ #if there is no file already, run the co
 #prep vegetation coverage
 #back transform absolute values
   if(any(terra::values(veg_coverage) > 1)){
-  cell_area <- terra::prod(terra::res(veg_coverage))
+  cell_area <- prod(terra::res(veg_coverage))
   
   veg_coverage <- veg_coverage / cell_area
 
@@ -43,7 +43,7 @@ veg_coverage[veg_coverage > 1] <- 1
 
 #prep vegation structure
 veg_structure <- terra::project(veg_structure, terra::crs(veg_coverage))
-if(is(veg_structure, "SpatRaster")){ #if dhm
+if(methods::is(veg_structure, "SpatRaster")){ #if dhm
   grass  <- veg_structure <= 1
   grass <- as.numeric(grass)
   grass <- terra::resample(grass, veg_coverage) #asess propotional grass cov.
@@ -55,7 +55,7 @@ if(is(veg_structure, "SpatRaster")){ #if dhm
   wooded <- terra::resample(wooded, veg_coverage)
 }
 
-if(is(veg_structure, "SpatVector")){ #if from lulc
+if(methods::is(veg_structure, "SpatVector")){ #if from lulc
   veg_r <- terra::project(veg_structure, veg_coverage)
   veg_r <- terra::rasterize(veg_r, veg_coverage, field="CUGIC_height") #might need to be flipped?
   
@@ -141,7 +141,7 @@ cugic_class_vect <- lulc["CUGIC_classes"]
 cugic_class_vect <- terra::project(cugic_class_vect, veg_coverage)
 cugic_class_raster <- terra::rasterize(cugic_class_vect, veg_coverage, field="CUGIC_classes")
 
-cugic <- terra::c(cugic, cugic_class_raster)
+cugic <- c(cugic, cugic_class_raster)
 names(cugic) <- paste0(names(cugic), year)
 
 #save the raster

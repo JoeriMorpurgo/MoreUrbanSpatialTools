@@ -52,6 +52,6 @@ NOTE: This function can run into std::bad_alloc errors. Reducing terraOptions(me
 Literature:
 }
 \examples{
-PLACEHOLDER()
+#PLACEHOLDER()
 
 }

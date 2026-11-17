@@ -9,7 +9,7 @@
 #' @keywords classification, height, proportion
 #' @export
 #' @examples
-#' diff_gain_loss()
+#' #diff_gain_loss()
 #' 
 
 

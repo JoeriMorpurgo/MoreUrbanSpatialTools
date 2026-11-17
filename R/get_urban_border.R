@@ -10,11 +10,11 @@
 #' @param gap_bridge_distance numeric value. Defaults to 1000, user input needs to be divisible by 10. Indicating meters, that borders will grow and shrink with the intend to close gaps. The basic value of this is 1000 (1km), which relates to approx 15min walking. This makes strips of lands classified as non-urban in the city (parks, nature reserves, etc.) that span 2 km urban, but does not affect anything else.
 #' @param gap_filling Logical. TRUE indicates to fill gaps within the urban border after all other operations. This may help with large parks or non-urban classified land.
 #' @param LULC .tif. Map from Terra having LULC. The following LULC cats are recoginized as non-urban c("agriculture", "water", "river", "canal", "stream", "sea", "natural", "Green buffer zones").
-#' @param save FALSE or path. Where to save the define urban border. Defaults to T to save border in the standard folder. F to no save. define path (character) to  place to in particular folder.
+#' @param save FALSE or path. Where to save the define urban border. Defaults to T to save border in the standard folder. F to no save. Define path (character) to  place to in particular folder.
 #' @keywords urban, border
 #' @export
 #' @examples
-#' PLACEHOLDER()
+#' #PLACEHOLDER()
 #' 
 
 ####################### get_urban_aoi #####################
@@ -97,7 +97,7 @@ if(is.null(pre_download_check_result)){ #if there is no file already, run the co
     terra::writeVector(urbanBorderVect, file = paste0(getwd(),"/MUST_downloaded_data/",city_name,"/borders/urban/urban_",fileWindowName,"border_",dateYear,".gpkg"),
                      overwrite = T)
   }
-  if(is.character(save)){terra::writeVector(urbanBorderVect, file = path, overwrite = T)}
+  if(is.character(save)){terra::writeVector(urbanBorderVect, file = save, overwrite = T)}
   
   #Return the vector
   return(urbanBorderVect) 

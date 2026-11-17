@@ -5,6 +5,7 @@
 #' @param stack stack raster Terra. Stack of rasters that need to be interpolated.
 #' @param cores Numeric. Number of cores to be used in calculations
 #' @param freq Numeric. Number of growth seasons expected
+#' @param tolerance Numeric. Numeric distance allowed between the prediction and actual value. If larger than tolerance, the value is rejected.
 #' @param max_iter Numeric. Maximum number of iterations for the HANTS algoritm
 #' @param max_gap Numeric. Maximum number of consecutive NA to interpolate values for
 #' @param max_NA_prop Proportion. Maximum proportion of NA before cancelling HANTS interpolation

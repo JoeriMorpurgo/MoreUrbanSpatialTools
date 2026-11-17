@@ -7,7 +7,7 @@
 #' @keywords classification, height, proportion
 #' @export
 #' @examples
-#' merge_osm_polygons()
+#' #merge_osm_polygons()
 
 ########### merge_osm_polygons ##################
 merge_osm_polygons <- function(osmdata_obj) {

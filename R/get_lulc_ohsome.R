@@ -6,16 +6,17 @@
 #' Literature: 
 #' @param aoi SpatRaster, raster, sf or character value. Is the area of interest
 #' @param date Charater or as.Date. String either containing a year, or a date that is recogninzed by as.Date. Required to pull data from the correct year.
-#' @param keyval_df dataframe or matrix with 2 columns; 1) key 2) value. This corresponds to Ohsome datastructure.
-#' @param year numeric value. Indicates the year of the data you request.
-#' @param filename character value. Path to folder where the file should be saved as a .gpkg
+#' @param keyval_df dataframe or matrix with 2 columns; 1) key 2) value. A dataframe with colnames (Key; Value) may be provided to pull different data from Ohsome.
+#' @param filepath character value. Path to folder where the file should be saved as a .gpkg
 #' @keywords OSM, Ohsome, Land-use, Land-cover, historic
 #' @export
 #' @examples
-#' PLACEHOLDER()
+#' #PLACEHOLDER()
 #' 
 
-get_lulc_ohsome <- function(aoi, date) {
+get_lulc_ohsome <- function(aoi, date,
+                            keyval_df = NULL,
+                            filepath = NULL) {
 
 #time
 year <- format(as.Date(date),"%Y") 
@@ -39,7 +40,7 @@ if(is.null(pre_download_check_result)){ #No LULC object found
     
   } else if(is.character(aoi)){
     cat("Using, ", aoi, " to query bbox from OSM")
-    bbox_vals <- get_municipal_border(city_name = aoi, historic = T, date = date)
+    bbox_vals <- get_municipal_border(city_name = aoi, date = date)
   } else {
     stop("Unsupported spatial object. Use terra, raster, sf, or character value.")
   }
@@ -48,33 +49,58 @@ if(is.null(pre_download_check_result)){ #No LULC object found
   name <- aoi
   
   # Build filter string from key/value pairs
-  keyval_df <- as.data.frame(lulc_info, stringsAsFactors = FALSE)
+  if(is.null(keyval_df)){keyval_df <- as.data.frame(lulc_info, stringsAsFactors = FALSE)}
   filter_parts <- paste0(keyval_df[[1]], "=", keyval_df[[2]]) #Mostly full dataset from OSM/OHSOME
   filter_str <- paste(filter_parts, collapse = " or ")
   
 
   # Convert year to ohsome time format
-  time_str <- sprintf(date)
+  time_str <- as.character(date)
   
-  # define API query
-  query_lulc_sf <- ohsome::ohsome_elements_geometry(
-    boundary = sf::st_bbox(bbox_vals), #this simplifies the bbox, as large complex bboxes can gives issues....
-    time = time_str,
-    filter = filter_str,
-    properties = c("metadata","tags"),
-    clipGeometry = FALSE
-  )
+  ### OLD V1 OHSOME API REQUEST ###
+  # # define API query
+  # query_lulc_sf <- ohsome::ohsome_elements_geometry(
+  #   boundary = sf::st_bbox(bbox_vals), #this simplifies the bbox, as large complex bboxes can gives issues....
+  #   time = time_str,
+  #   filter = filter_str,
+  #   properties = c("metadata","tags"),
+  #   clipGeometry = FALSE
+  # )
+  # 
+  # #quick test
+  # #test <- ohsome_post(query_lulc_sf)
+  # 
+  # cat("Sending query to Ohsome")
+  # 
+  # #Send API req with robust wrapper to retry upon fail  
+  # lulc_sf <- robust_api_request(
+  #   ohsome::ohsome_post,
+  #   query_lulc_sf
+  # )
   
-  #quick test
-  #test <- ohsome_post(query_lulc_sf)
+  ### V2 OHSOME API REQUEST
+  # 3. Define the v2 API payload
+  payload <- list(filter = filter_str,
+                  aoi    = as.numeric(sf::st_bbox(bbox_vals)), # simplified bounding box
+                  time   = time_str,
+                  clip   = FALSE)
+  tmp_parquet <- tempfile(fileext = ".parquet")
   
-  cat("Sending query to Ohsome")
+  cat("Sending LULC query to Ohsome v2...\n")
+  resp <- httr2::request("https://api.heigit.org/ohsome-api/v2/extraction/features.parquet") |>
+    httr2::req_headers(
+      "Authorization" = get_ohsome_key(), 
+      "Content-Type"  = "application/json"
+    ) |>
+    httr2::req_body_json(payload) |>
+    httr2::req_retry(max_tries = 3, max_seconds = 180) |>
+    httr2::req_perform(path = tmp_parquet)
   
-  #Send API req with robust wrapper to retry upon fail  
-  lulc_sf <- robust_api_request(
-    ohsome::ohsome_post,
-    query_lulc_sf
-  )
+  # Pull from storage and transform into sf object
+  lulc_sf <- arrow::read_parquet(resp$body)
+  lulc_sf$geometry <- sf::st_as_sfc(lulc_sf$geom, crs = 4326)
+  lulc_sf$geom <- NULL
+  lulc_sf <- sf::st_as_sf(lulc_sf)
   
   cat("Received Ohsome data")
   
@@ -105,7 +131,9 @@ if(is.null(pre_download_check_result)){ #No LULC object found
   lulc_vect_masked <- lulc_vect_masked["lulc"]
   
   terra::writeVector(lulc_vect_masked, 
-              file = paste0("MUST_downloaded_data/",city_name,"/lulc",year,".gpkg"))
+                     if(is.null(filepath)){file = paste0("./MUST_downloaded_data/",city_name,"/lulc",year,".gpkg")}else{
+                       file = paste0(filepath,city_name,"/lulc",year,".gpkg")
+                     })
   
   
   #hand back the sf

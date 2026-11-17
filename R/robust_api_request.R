@@ -11,7 +11,7 @@
 #' @keywords classification, height, proportion
 #' @export
 #' @examples
-#' robust_api_request()
+#' #robust_api_request()
 #' 
 
 ################### robust_osm_request #################

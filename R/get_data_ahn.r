@@ -8,7 +8,7 @@
 #' @keywords download, request, netherlands, height
 #' @export
 #' @examples
-#' download_ahn_file()
+#' #download_ahn_file()
 #' 
 
 #Function to download
@@ -28,11 +28,11 @@ pre_download_check_result <- pre_download_check(city_name = city_name,
 if(is.null(pre_download_check_result)){ #if there is no file already, run the code.
   
   #get names of the squares to download
-  ahn_sheets <- rAHNextract::ahn_sheets_info(AHN = "AHN4", dem = "DSM", resolution = "0.5") #shouldn't matter to much as names don't change
+  ahn_sheets <- get_ahn_sheets_info() #pull codes and spatial data
   bbox <- get_municipal_bbox(city_name)
   bbox <- sf::st_transform(bbox, sf::st_crs(ahn_sheets))
   sheets <- ahn_sheets[sf::st_intersects(ahn_sheets, bbox, sparse = FALSE), ]
-  kaartbladen  <- sheets$kaartbladNr  #what we need to download.
+  kaartbladen  <- sheets$ahn  #what we need to download.
   
 
   for(is_dsm in c(T, F)){ #run code for DSM and DTM
@@ -50,11 +50,11 @@ if(is.null(pre_download_check_result)){ #if there is no file already, run the co
     
     
     #get names of the squares to download
-    ahn_sheets <- rAHNextract::ahn_sheets_info("AHN4", dem = "DSM", resolution = "0.5")
+    ahn_sheets <- get_ahn_sheets_info() #pull codes and spatial info
     bbox <- get_municipal_bbox(city_name)
     bbox <- sf::st_transform(bbox, sf::st_crs(ahn_sheets))
     sheets <- ahn_sheets[sf::st_intersects(ahn_sheets, bbox, sparse = FALSE), ]
-    kaartbladen  <- sheets$kaartbladNr  
+    kaartbladen  <- sheets$ahn
     
     for (blad in kaartbladen) {
       

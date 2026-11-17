@@ -16,7 +16,7 @@ NOTE:
 Literature:
 }
 \examples{
-PLACEHOLDER()
+#PLACEHOLDER()
 
 }
 \keyword{Land-cover,}

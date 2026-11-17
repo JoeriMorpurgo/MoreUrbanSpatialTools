@@ -17,7 +17,7 @@ pre_download_check(city_name, object, subfolder = NULL)
 Checks if files are in cache and retrieves if present.
 }
 \examples{
-PLACEHOLDER()
+#PLACEHOLDER()
 
 
 }

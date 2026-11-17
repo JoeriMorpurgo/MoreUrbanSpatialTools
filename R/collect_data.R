@@ -14,7 +14,7 @@
 #' @param enddate charachter. standard is result of Sys.Date(). This fetches year-month-day of the system and removes 1 year as not all data is available. This means 2026-03-12 would result in a 2025 enddate. Alternatively, a enddate may be entered with the "year-month-day" format.
 #' @export
 #' @examples
-#' PLACEHOLDER()
+#' #PLACEHOLDER()
 #' 
 
 collect_data <- function(city_name,
@@ -47,7 +47,6 @@ for(timestep in steps) { #steps depend on startdate and enddate
   #request municipal border
   print(paste0("Retrieving municipal border for ",city_name, " in year ", startdate_time))
   municipal_border <- get_municipal_border(city_name = city_name,
-                                           historic = T,
                                            date = startdate_time)
   
   

@@ -40,7 +40,7 @@ NOTE: https://openeo.dataspace.copernicus.eu/ For Sentinel2 data is harmonizes t
 Literature:
 }
 \examples{
-get_openeo_data()
+#get_openeo_data()
 
 }
 \keyword{API,}

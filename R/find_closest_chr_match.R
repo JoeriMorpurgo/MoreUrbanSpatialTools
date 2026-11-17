@@ -10,7 +10,7 @@
 #' @keywords words, similarity
 #' @export
 #' @examples
-#' find_closest_chr_match()
+#' #find_closest_chr_match()
 #' 
 
 find_closest_chr_match <- function(max.dist = 0.9,

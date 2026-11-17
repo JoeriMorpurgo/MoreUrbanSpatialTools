@@ -6,7 +6,7 @@
 #' @keywords OSM, Ohsome, Land-use, Land-cover, historic
 #' @export
 #' @examples
-#' PLACEHOLDER()
+#' #PLACEHOLDER()
 #' 
 #' 
 pre_download_check <- function(city_name,

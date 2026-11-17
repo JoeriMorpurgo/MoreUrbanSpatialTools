@@ -30,7 +30,7 @@ get_urban_border(
 
 \item{LULC}{.tif. Map from Terra having LULC. The following LULC cats are recoginized as non-urban c("agriculture", "water", "river", "canal", "stream", "sea", "natural", "Green buffer zones").}
 
-\item{save}{FALSE or path. Where to save the define urban border. Defaults to T to save border in the standard folder. F to no save. define path (character) to  place to in particular folder.}
+\item{save}{FALSE or path. Where to save the define urban border. Defaults to T to save border in the standard folder. F to no save. Define path (character) to  place to in particular folder.}
 }
 \description{
 This function take the LULC file, creates a binary raster of urban environment through excluding green LULC. After it fill gaps between urban cell up to 1km and then define the urban border as 50\% of space having a urban LULC in either (default) 500m, 300m or 1000m moving window. NOTE: 1000m will be slow, and can crash, for larger cities.
@@ -38,7 +38,7 @@ NOTE:
 Literature:
 }
 \examples{
-PLACEHOLDER()
+#PLACEHOLDER()
 
 }
 \keyword{border}

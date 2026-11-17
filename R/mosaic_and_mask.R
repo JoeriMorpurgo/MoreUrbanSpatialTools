@@ -9,7 +9,7 @@
 #' @keywords classification, height, proportion
 #' @export
 #' @examples
-#' mosaic_and_mask()
+#' #mosaic_and_mask()
 #' 
 
 #v2

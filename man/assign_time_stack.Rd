@@ -13,7 +13,7 @@ assign_time_stack(rastStack)
 Takes a .nc or rasterstack that was generated from openEO and assigns time to the stack.
 }
 \examples{
-PLACEHOLDER()
+#PLACEHOLDER()
 
 
 }

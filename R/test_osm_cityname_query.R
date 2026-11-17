@@ -8,7 +8,7 @@
 #' @keywords classification, height, proportion
 #' @export
 #' @examples
-#' diff_gain_loss()
+#' #diff_gain_loss()
 #' 
 
 test_osm_cityname_query <- function(cities, map = F){ #for geocoder.

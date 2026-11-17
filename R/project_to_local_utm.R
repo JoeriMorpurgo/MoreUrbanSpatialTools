@@ -6,7 +6,7 @@
 #' @param object Geospatial object. This can be sf, raster or terra object.
 #' @export
 #' @examples
-#' PLACEHOLDER()
+#' #PLACEHOLDER()
 #' 
 
 

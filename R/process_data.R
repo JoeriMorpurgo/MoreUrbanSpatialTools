@@ -7,7 +7,7 @@
 #' @param city_name character value. name of a city and country to retrieve data for. Format should be "city, country". 
 #' @export
 #' @examples
-#' PLACEHOLDER()
+#' #PLACEHOLDER()
 #' 
 
 process_data <- function(city_name){

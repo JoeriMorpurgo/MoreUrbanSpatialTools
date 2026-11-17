@@ -9,7 +9,7 @@
 #' @keywords classification, height, proportion
 #' @export
 #' @examples
-#' mask_buildings_ohsome_robust()
+#' #mask_buildings_ohsome_robust()
 #' 
 
 
@@ -34,23 +34,49 @@ mask_buildings_ohsome_robust <- function(rast, date = "2017-01-01T00:00:00Z") {
   
   cat("Creating ohsome query for buildings at", date, "...\n")
   
-  # define API query
-  buildings_sf <- ohsome::ohsome_elements_geometry(
-    boundary = bbox,
-    time = date,
-    filter = "building=*"
+  ### OLD V1 OHSOME API REQUEST ###
+  
+  # # define API query
+  # buildings_sf <- ohsome::ohsome_elements_geometry(
+  #   boundary = bbox,
+  #   time = date,
+  #   filter = "building=*"
+  # )
+  # 
+  # print(sf::st_as_text(bbox))
+  # cat("Sending query to Ohsome")
+  # 
+  # #Send API req with robust wrapper to retry upon fail  
+  # buildings_sf_poly <- MUST::robust_api_request(
+  #   ohsome::ohsome_post,
+  #   buildings_sf
+  # )
+  
+  ### NEW V2 OHSOME API REQUEST ###
+  payload <- list(
+    filter = "building=*",
+    aoi    = as.numeric(sf::st_bbox(bbox)), # Simplified bounding box
+    time   = as.character(date),             # ISO-8601 date string
+    clip   = FALSE                           # Replaces clipGeometry = FALSE
   )
+  tmp_parquet <- tempfile(fileext = ".parquet")
   
-  print(sf::st_as_text(bbox))
-  cat("Sending query to Ohsome")
+  cat("Sending query to Ohsome V2 API")
+  resp <- httr2::request("https://api.heigit.org/ohsome-api/v2/extraction/features.parquet") |>
+    httr2::req_headers(
+      "Authorization" = paste0("Bearer ", get_ohsome_key()),
+      "Content-Type"  = "application/json"
+    ) |>
+    httr2::req_body_json(payload) |>
+    httr2::req_retry(max_tries = 3, max_seconds = 180) |>
+    httr2::req_perform(path = tmp_parquet)
   
-  #Send API req with robust wrapper to retry upon fail  
-  buildings_sf_poly <- MUST::robust_api_request(
-    ohsome::ohsome_post,
-    buildings_sf
-  )
+  buildings_sf <- arrow::read_parquet(resp$body)
+  buildings_sf$geometry <- sf::st_as_sfc(buildings_sf$geom, crs = 4326)
+  buildings_sf$geom <- NULL
+  buildings_sf_poly <- sf::st_as_sf(buildings_sf)
   
-    cat("Retrieved requested data")
+  cat("Retrieved requested data")
     
   if (is.null(buildings_sf_poly) || nrow(buildings_sf_poly) == 0) {
     cat("No building data found at this date.\n")

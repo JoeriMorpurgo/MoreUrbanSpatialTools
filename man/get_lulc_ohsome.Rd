@@ -4,18 +4,16 @@
 \alias{get_lulc_ohsome}
 \title{Retrieves historic LULC data from Ohsome}
 \usage{
-get_lulc_ohsome(aoi, date)
+get_lulc_ohsome(aoi, date, keyval_df = NULL, filepath = NULL)
 }
 \arguments{
 \item{aoi}{SpatRaster, raster, sf or character value. Is the area of interest}
 
 \item{date}{Charater or as.Date. String either containing a year, or a date that is recogninzed by as.Date. Required to pull data from the correct year.}
 
-\item{keyval_df}{dataframe or matrix with 2 columns; 1) key 2) value. This corresponds to Ohsome datastructure.}
+\item{keyval_df}{dataframe or matrix with 2 columns; 1) key 2) value. A dataframe with colnames (Key; Value) may be provided to pull different data from Ohsome.}
 
-\item{year}{numeric value. Indicates the year of the data you request.}
-
-\item{filename}{character value. Path to folder where the file should be saved as a .gpkg}
+\item{filepath}{character value. Path to folder where the file should be saved as a .gpkg}
 }
 \description{
 This function is a wrapper for ohsome_elements_geometry to retrieve historic LULC data from Ohsome.
@@ -24,7 +22,7 @@ NOTE:
 Literature:
 }
 \examples{
-PLACEHOLDER()
+#PLACEHOLDER()
 
 }
 \keyword{Land-cover,}
