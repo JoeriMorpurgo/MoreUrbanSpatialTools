@@ -22,6 +22,3 @@ Literature:
 #mosaic_and_mask()
 
 }
-\keyword{classification,}
-\keyword{height,}
-\keyword{proportion}

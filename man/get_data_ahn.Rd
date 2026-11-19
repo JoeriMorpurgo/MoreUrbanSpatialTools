@@ -20,7 +20,3 @@ Literature:
 #download_ahn_file()
 
 }
-\keyword{download,}
-\keyword{height}
-\keyword{netherlands,}
-\keyword{request,}

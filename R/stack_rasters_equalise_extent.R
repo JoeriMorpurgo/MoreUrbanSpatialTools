@@ -4,7 +4,6 @@
 #' NOTE: 
 #' Literature: 
 #' @param rasterFiles path to raster files.
-#' @keywords classification, height, proportion
 #' @export
 #' @examples
 #' #mask_buildings_ohsome_robust()

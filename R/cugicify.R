@@ -9,7 +9,6 @@
 #' @param veg_structure spatialObject. Indicating vegetation height. Either raster with numeric values OR vector with values ("grass","shrub","wooded").
 #' @param lulc vector. Contains LULC that relates to the lulc_info data table associated with the package
 #' @param alternative_lookup dataframe. A dataframe that functions as a lookup table. first column should be the classes or values from your input lulc map, second column should be the new values assigned. Second column can be identical to first column if user wishes not to change this. However, downstream function may not work if the CUGIC LULC classes are not used.
-#' @keywords classification, height, proportion
 #' @export
 #' @examples
 #' #make_cugic()

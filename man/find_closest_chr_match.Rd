@@ -23,5 +23,3 @@ Literature:
 #find_closest_chr_match()
 
 }
-\keyword{similarity}
-\keyword{words,}

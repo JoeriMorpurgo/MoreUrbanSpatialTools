@@ -20,6 +20,3 @@ Literature:
 #diff_gain_loss()
 
 }
-\keyword{classification,}
-\keyword{height,}
-\keyword{proportion}

@@ -5,7 +5,6 @@
 #' Literature: 
 #' @param cities character vector. Value containing city names
 #' @param map TRUE or FALSE. If map with points of the cities should be shown
-#' @keywords classification, height, proportion
 #' @export
 #' @examples
 #' #diff_gain_loss()

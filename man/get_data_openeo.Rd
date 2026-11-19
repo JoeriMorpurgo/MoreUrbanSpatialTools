@@ -43,8 +43,3 @@ Literature:
 #get_openeo_data()
 
 }
-\keyword{API,}
-\keyword{Indicators,}
-\keyword{Remote}
-\keyword{Sensing,}
-\keyword{openEO}

@@ -41,5 +41,3 @@ Literature:
 #PLACEHOLDER()
 
 }
-\keyword{border}
-\keyword{urban,}

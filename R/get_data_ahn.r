@@ -5,7 +5,6 @@
 #' Literature: 
 #' @param date Character value; dd-mm-yyyy
 #' @param city_name Character value; city and country ideally. e.g. "Alkmaar, the Netherlands"
-#' @keywords download, request, netherlands, height
 #' @export
 #' @examples
 #' #download_ahn_file()

@@ -8,7 +8,6 @@
 #' @param ... arguments for osm_function
 #' @param max_attempts numeric value. Maximum number of attempts
 #' @param wait_time numeric value. Wait between attempts. 
-#' @keywords classification, height, proportion
 #' @export
 #' @examples
 #' #robust_api_request()

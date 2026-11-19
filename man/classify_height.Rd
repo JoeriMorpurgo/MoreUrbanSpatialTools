@@ -22,6 +22,3 @@ Literature: CUGIC: The Consolidated Urban Green Infrastructure Classification fo
 #classify_height()
 
 }
-\keyword{classification,}
-\keyword{height,}
-\keyword{proportion}

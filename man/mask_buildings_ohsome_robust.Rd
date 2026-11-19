@@ -21,6 +21,3 @@ Literature:
 #mask_buildings_ohsome_robust()
 
 }
-\keyword{classification,}
-\keyword{height,}
-\keyword{proportion}

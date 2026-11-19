@@ -11,7 +11,6 @@
 #' @param gap_filling Logical. TRUE indicates to fill gaps within the urban border after all other operations. This may help with large parks or non-urban classified land.
 #' @param LULC .tif. Map from Terra having LULC. The following LULC cats are recoginized as non-urban c("agriculture", "water", "river", "canal", "stream", "sea", "natural", "Green buffer zones").
 #' @param save FALSE or path. Where to save the define urban border. Defaults to T to save border in the standard folder. F to no save. Define path (character) to  place to in particular folder.
-#' @keywords urban, border
 #' @export
 #' @examples
 #' #PLACEHOLDER()

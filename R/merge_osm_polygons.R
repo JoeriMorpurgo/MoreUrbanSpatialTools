@@ -4,7 +4,6 @@
 #' NOTE: 
 #' Literature: 
 #' @param osmdata_obj osm_output. The output from OSM API request.
-#' @keywords classification, height, proportion
 #' @export
 #' @examples
 #' #merge_osm_polygons()

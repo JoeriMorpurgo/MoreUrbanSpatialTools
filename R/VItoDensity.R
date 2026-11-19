@@ -10,7 +10,7 @@
 #' @param city_name character. Relates to the place where to look for data.
 #' @param date character. The year of the VI (and optionally LULC-map) to consider. Works only with YYYY-MM-DD format. or numeric year as YYYY format.
 #' @param VI character or terra rast. Character needs to be one of the follow: c("NDVI", "EVI", "MSAVI") and will retrieve this file. If a rast is provided this will be used as VI input.
-#' @param VI_min numeric OR "Dynamic". Numeric (default = 0.25) denotes the minimal threshold value of NDVI to be considered 0% vegetation coverage. The dynamic option requires LULC to be downloaded and draws random point in LULC that is and isn't green to determine a threshold. This also produces a plot and some extra information. NOTE: The dynamic approach only takes 1 raster layer. Providing a numeric value allows for the processing of a full Stack.
+#' @param VI_min Numeric OR "Dynamic". Numeric (default = 0.25) sets the minimal threshold value of a VI to be considered 0% vegetation coverage. The dynamic option requires LULC to be downloaded and draws random point in LULC that is and isn't green LULC to determine a threshold. This also produces a plot and some extra information. NOTE: The dynamic approach only takes 1 raster layer. Providing a numeric value allows for the processing of a full Stack.
 #' @param VI_max Proportion (defaults to NULL). Defaults to the max present in the VI raster present. Alternatively, user may provide a value between 0-1. This should always be higher than VI_min. 
 #' @param lulc spatVect from Terra. A spat vector that contains lulc classes that are present in lulcInfo from the MUST package.
 #' @param weight numeric. Defaults to 0.75. Weight to be assigned to the Weighted Youden Index. 
@@ -176,15 +176,19 @@ orig_time <- terra::time(VI)
       x_max <- max(c(density_green$x, density_grey$x, density_water$x))
       y_max <- max(c(density_green$y, density_grey$y, density_water$y))
       
-      # place to save the figrues
-      if(figure){ #standard location. AKA figure == T
-        dir.create(paste0("MUST_downloaded_data/",city_name,"/result/VItoDensity/"), recursive = T, showWarnings = F)
-        grDevices::pdf(file = paste0("MUST_downloaded_data/",city_name,"/result/VItoDensity/",year,"_",VItype,"_thresholds.pdf"), width = 14, height = 6)
-        }
+      
       #user-specified location
       if(is.character(figure)){
+        dir.create(dirname(paste0(figure)), recursive = T, showWarnings = F)
         grDevices::pdf(file = paste0(figure,".pdf"), width = 14, height = 6)
+      } else{
+        # place to save the figrues
+        if(figure){ #standard location. AKA figure == T
+          dir.create(paste0("MUST_downloaded_data/",city_name,"/result/VItoDensity/"), recursive = T, showWarnings = F)
+          grDevices::pdf(file = paste0("MUST_downloaded_data/",city_name,"/result/VItoDensity/",year,"_",VItype,"_thresholds.pdf"), width = 14, height = 6)
+        }
       }
+        
       
       #specify how to panel the plots.
       graphics::par(mfrow = c(1, 2))
@@ -312,16 +316,19 @@ orig_time <- terra::time(VI)
       
       #save the fcv raster
       if(is.null(save_path)){
-      dir.create(paste0("MUST_downloaded_data/",city_name,"/result/"), showWarnings = F)
-      dir.create(paste0("MUST_downloaded_data/",city_name,"/result/VItoDensity/"), showWarnings = F)
+      terra::time(output) <- rep(orig_time, terra::nlyr(output))
+      dir.create(paste0("MUST_downloaded_data/",city_name,"/result/VItoDensity/"), showWarnings = F, recursive = T)
       terra::writeRaster(output, filename = paste0("MUST_downloaded_data/",city_name,"/result/VItoDensity/",year,"_",VItype,"_scaled_",VI_min,".tif"),
                          overwrite = T)
-      }else{(terra::writeRaster(output, filename = paste0(save_path,".tif")))}
+      }else{
+        terra::time(output) <- rep(orig_time, terra::nlyr(output))
+        (terra::writeRaster(output, filename = paste0(save_path,".tif"),
+                            overwrite = T))}
       
       }
   
     #add in time back
-    terra::time(output) <- orig_time
+    terra::time(output) <- rep(orig_time, terra::nlyr(output))
     
   print("Returning scaled raster")
   return(output)

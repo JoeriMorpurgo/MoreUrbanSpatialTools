@@ -6,7 +6,6 @@
 #' Literature: 
 #' @param rast raster object. Raster that you'd like to mask out if they verlap with buildings at some point in time
 #' @param date date/time. For when to retrieve the building data.
-#' @keywords classification, height, proportion
 #' @export
 #' @examples
 #' #mask_buildings_ohsome_robust()

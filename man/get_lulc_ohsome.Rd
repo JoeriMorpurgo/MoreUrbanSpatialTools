@@ -25,8 +25,3 @@ Literature:
 #PLACEHOLDER()
 
 }
-\keyword{Land-cover,}
-\keyword{Land-use,}
-\keyword{OSM,}
-\keyword{Ohsome,}
-\keyword{historic}

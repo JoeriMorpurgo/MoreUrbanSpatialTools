@@ -3,7 +3,6 @@
 #' @param city_name folder to check in the MUST_downloaded_data folder.
 #' @param subfolder sub-folder to look for the object
 #' @param object file to retrieve
-#' @keywords OSM, Ohsome, Land-use, Land-cover, historic
 #' @export
 #' @examples
 #' #PLACEHOLDER()

@@ -21,8 +21,3 @@ Checks if files are in cache and retrieves if present.
 
 
 }
-\keyword{Land-cover,}
-\keyword{Land-use,}
-\keyword{OSM,}
-\keyword{Ohsome,}
-\keyword{historic}

@@ -2,7 +2,7 @@
 % Please edit documentation in R/build_dhm.R
 \name{build_dhm}
 \alias{build_dhm}
-\title{build_dhm; build digital height model}
+\title{Build digital height model}
 \usage{
 build_dhm(dtm, dsm)
 }
@@ -17,5 +17,3 @@ This function takes raster digital terrain models and digital surface models to 
 \examples{
 #build_dhm()
 }
-\keyword{Height}
-\keyword{model}

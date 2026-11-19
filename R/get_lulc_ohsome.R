@@ -8,7 +8,6 @@
 #' @param date Charater or as.Date. String either containing a year, or a date that is recogninzed by as.Date. Required to pull data from the correct year.
 #' @param keyval_df dataframe or matrix with 2 columns; 1) key 2) value. A dataframe with colnames (Key; Value) may be provided to pull different data from Ohsome.
 #' @param filepath character value. Path to folder where the file should be saved as a .gpkg
-#' @keywords OSM, Ohsome, Land-use, Land-cover, historic
 #' @export
 #' @examples
 #' #PLACEHOLDER()

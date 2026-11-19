@@ -6,7 +6,6 @@
 #' NOTE: 
 #' Literature: 
 #' @param raster_stack A raster stack representing a time series
-#' @keywords classification, height, proportion
 #' @export
 #' @examples
 #' #diff_gain_loss()

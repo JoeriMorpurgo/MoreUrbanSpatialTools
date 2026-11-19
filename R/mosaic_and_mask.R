@@ -6,7 +6,6 @@
 #' @param raster_dir path to folder with raster files
 #' @param aoi_file path to file that canbe loaded by vect() from Terra.
 #' @param out_file Optional. Path to place where to put the output.
-#' @keywords classification, height, proportion
 #' @export
 #' @examples
 #' #mosaic_and_mask()

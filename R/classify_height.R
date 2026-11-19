@@ -7,7 +7,6 @@
 #' Literature: CUGIC: The Consolidated Urban Green Infrastructure Classification for assessing ecosystem services and biodiversity, https://doi.org/10.1016/j.landurbplan.2023.104726
 #' @param clean_dhm A raster representing a digital height model.
 #' @param template A raster (of coarser resolution) that can be used to calculate proportions per height class.
-#' @keywords classification, height, proportion
 #' @export
 #' @examples
 #' #classify_height()

@@ -25,7 +25,6 @@ IMPORTANT: For the data collection via the MUST package, it is required to have 
 library(MUST)
 library(openeo)
 library(osmdata)
-library(ohsome)
 library(terra)
 library(sf)
 ```

@@ -1,7 +1,6 @@
 #' Takes a .nc or rasterstack that was generated from openEO and assigns time to the stack.
 #'
 #' @param rastStack terra raster stack from openEO. 
-#' @keywords stack, openEO, time
 #' @export
 #' @examples
 #' #PLACEHOLDER()

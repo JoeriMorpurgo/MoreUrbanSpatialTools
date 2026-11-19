@@ -17,6 +17,3 @@ Takes a .nc or rasterstack that was generated from openEO and assigns time to th
 
 
 }
-\keyword{openEO,}
-\keyword{stack,}
-\keyword{time}

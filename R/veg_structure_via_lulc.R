@@ -4,7 +4,6 @@
 #' Literature: 
 #' @param lulc_map spatVector object from Terra. Should contain classes that relate to a CUGIC height class.
 #' @param alternative_lookup dataframe. A dataframe that functions as a lookup-table, where the first column contains the names of the classes of your lulc_map and the second column contains the names of the CUGIC height classes (grass, shrub or wooded). 
-#' @keywords OSM, Ohsome, Land-use, Land-cover, historic
 #' @export
 #' @examples
 #' #PLACEHOLDER()

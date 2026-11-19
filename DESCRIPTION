@@ -2,10 +2,10 @@ Package: MUST
 Title: More Urban Spatial Tools
 Version: 0.2.0
 Authors@R: 
-    c(person("Joeri", "Morpurgo", role = c("aut", "cre"),
+    c(person("Joeri", "Morpurgo", role = c("aut", "cre", "cph"),
                      email = "j.morpurgo@cml.leidenuniv.nl",
                      comment = c(ORCID = "0000-0001-7286-1991")))
-Description: More Urban Spatial Tools (MUST) is a package that intends to couple several frequently used GIS data sources and also provide surface level time-series analysis. The general aim of the package is to API request and combine remote sensing satellite data from Google Earth Engine and land-use land-cover (LULC) data from Ohsome (Historical repository of Open Street Maps (OSM)). The package provide a simple interface to request data for a city over a span of time. The initial aim for this code was to support the temporal analysis of green spaces in urban areas. To facilitate this, we have started with the functionality of retrieving - currently only annual - municipal border, estimate built borders, retrieving LULC data, retrieving vegetation indicators (NDVI & EVI). Added functionality is  retrieving LST from Landsat 8. Remote sensing data can currently only be requested as a year composite image of median or max value. 
+Description: For spatio-temporal urban environmental analysis, More Urban Spatial Tools (MUST) simplifies routine GIS steps by collecting, processing and analyzing data. It combines remote sensing satellite data from OpenEo and land-use land-cover (LULC) data from Ohsome (historical repository of Open Street Maps (OSM)). Functions cover retrieving municipal borders, estimating urban borders, retrieving LULC data, retrieving remote sensing indicators (Normalized Difference Vegetation Index, Enhanced Vegetation Index, Modified Soil Adjusted Vegetation Index, Normalized Difference Moisture Index, Land Surface Temperature), estimating vegetation index thresholds, estimating vegetation coverages and calculating several urban ecologically relevant spatio-temporal landscape-level metrics. 
 Maintainer: Joeri Morpurgo <j.morpurgo@cml.leidenuniv.nl>
 License: GPL (>= 3)
 Encoding: UTF-8

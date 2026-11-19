@@ -17,6 +17,3 @@ Literature:
 \examples{
 #merge_osm_polygons()
 }
-\keyword{classification,}
-\keyword{height,}
-\keyword{proportion}

@@ -7,7 +7,6 @@
 #' @param stringY Character values; A vector containing the multiple character values of which you want to find the most similar to stringX.
 #' @param max.dist Numeric value; Indicating maximum distance allowed between X and the result. Value must be between 0 - 1.
 #' 0 needs the result to be the same as X. 1 Allows for maximum difference between X and the result.
-#' @keywords words, similarity
 #' @export
 #' @examples
 #' #find_closest_chr_match()

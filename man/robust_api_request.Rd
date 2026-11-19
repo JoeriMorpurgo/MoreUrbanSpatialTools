@@ -25,6 +25,3 @@ Literature:
 #robust_api_request()
 
 }
-\keyword{classification,}
-\keyword{height,}
-\keyword{proportion}
