@@ -36,7 +36,7 @@ if(is.null(pre_download_check_result)){
   if(satellite == "sentinel2"){
     idSat <- "SENTINEL2_L2A"
     mask_band <- "SCL"
-    mask_values <- c(1,3,8,9,10)
+    mask_values <- c(0,1,3,8,9,10,11)
     cloud_property <- "eo:cloud_cover"
     }
   
