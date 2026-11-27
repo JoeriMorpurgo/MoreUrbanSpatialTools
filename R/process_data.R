@@ -12,7 +12,7 @@
 #' @param VIt_min Character or numeric value. Numeric indicates a constant for the VI in the order of the VI parameter. Alternatively, provide a character value such as "dynamic" for estimation of VIt.
 #' @param VIt_range Numeric vector. Vector numbers relating the growing season which are used to estimate the Vegetation Index Thresholds (VIt). For example c(5,6,7,8,9) or 5:9. Not applicable for annually aggregated data.
 #' @export
-#' @returns 
+#' @returns placeholder
 #' @examples
 #' #PLACEHOLDER()
 #' 
@@ -21,7 +21,7 @@ process_data <- function(city_name,
                          VI = c("NDVI", "EVI", "MSAVI"),
                          VI_interval = NULL,
                          VI_method = NULL,
-                         VIt_method = "w_youden",
+                         VIt_min = "w_youden",
                          VIt_range = NULL){
   
   ##################
@@ -43,11 +43,11 @@ process_data <- function(city_name,
         #find files
         VI_files <- list.files(path = paste0("./MUST_downloaded_data/",city_name,"/",VIsearch),
                                full.names = T)
-        VI_files <- VI_files[str_detect(VI_files, pattern = "_raw", negate = T)] #remove raw files
+        VI_files <- VI_files[stringr::str_detect(VI_files, pattern = "_raw", negate = T)] #remove raw files
         
         #Identify temporal interval (max,median,90th; monthly(monthly_max,monthly_median,monthly_90th); or none)
-        monthly_VI_files <- VI_files[str_detect(VI_files, pattern = "monthly")]
-        VI_files <- VI_files[str_detect(VI_files, pattern = "monthly", negate = T)] #omit monthly from the list
+        monthly_VI_files <- VI_files[stringr::str_detect(VI_files, pattern = "monthly")]
+        VI_files <- VI_files[stringr::str_detect(VI_files, pattern = "monthly", negate = T)] #omit monthly from the list
         
         #identify aggregation
         VI_files_aggre <- VI_files[grepl(c("max|median|90th"), VI_files)]
@@ -88,14 +88,14 @@ process_data <- function(city_name,
         # retrieve all VI files
         VI_files <- list.files(path = paste0("./MUST_downloaded_data/",city_name,"/",VIsearch),
                                      full.names = T)
-        VI_files <- VI_files[str_detect(VI_files, pattern = "_raw", negate = T)] #remove raw files
+        VI_files <- VI_files[stringr::str_detect(VI_files, pattern = "_raw", negate = T)] #remove raw files
         
           ##Collect right files for each method
           ### Monthly files ###
           if(VI_interval == "monthly"){
             
             #pull monthly files
-            VI_files <- VI_files[str_detect(VI_files, pattern = "monthly")]
+            VI_files <- VI_files[stringr::str_detect(VI_files, pattern = "monthly")]
             
                       #fail-safe
                       if(length(VI_files)==0){
@@ -110,7 +110,7 @@ process_data <- function(city_name,
           ### Aggregated files ###
           if(VI_interval == "aggregated"){
             #identify if aggregated
-            VI_files <- VI_files[str_detect(VI_files, pattern = "monthly", negate = T)] #remove monthly
+            VI_files <- VI_files[stringr::str_detect(VI_files, pattern = "monthly", negate = T)] #remove monthly
             VI_files <- VI_files[grepl(c("max|median|90th"), VI_files)] #pull aggregated files
                     
                     #fail-safe
@@ -152,9 +152,9 @@ process_data <- function(city_name,
         VIsearch_files <- get(paste0(VIsearch,"_files"))
         
         #identify method of aggregation
-        maxCount <- str_detect(VIsearch_files, pattern = "max")
-        medianCount <- str_detect(VIsearch_files, pattern = "median")
-        `90thCount` <- str_detect(VIsearch_files, pattern = "90th")
+        maxCount <- stringr::str_detect(VIsearch_files, pattern = "max")
+        medianCount <- stringr::str_detect(VIsearch_files, pattern = "median")
+        `90thCount` <- stringr::str_detect(VIsearch_files, pattern = "90th")
         
         #compare for which most files are present
         vec_list <- list( #favours the first of the list.
@@ -171,7 +171,7 @@ process_data <- function(city_name,
                        sum(`90thCount`), " 90th percentile files for ", VIsearch))
         message(paste0("--- Using ", names(vec_list)[max_idx], " files for ", VIsearch, " in processing and analysis ---"))
         VI_method_guess <- names(vec_list)[max_idx]
-        VIsearch_files <- VIsearch_files[str_detect(VIsearch_files, pattern = names(vec_list)[max_idx])]
+        VIsearch_files <- VIsearch_files[stringr::str_detect(VIsearch_files, pattern = names(vec_list)[max_idx])]
         
                 #fail-safe
                 if(length(VIsearch_files)==0){
@@ -189,7 +189,7 @@ process_data <- function(city_name,
       } else { #user assigned temporal aggregation method
         #pull vector from previous block
         VIsearch_files <- get(paste0(VIsearch,"_files"))
-        VIsearch_files <- str_detect(VIsearch_files, pattern = VI_method)
+        VIsearch_files <- stringr::str_detect(VIsearch_files, pattern = VI_method)
         
         
                 #fail-safe
@@ -207,7 +207,7 @@ process_data <- function(city_name,
   rm(VI_files)
       
   #identify the temporal range of the data
-  filename_objects <- ls()[str_detect(ls(), pattern= "_files")]
+  filename_objects <- ls()[stringr::str_detect(ls(), pattern= "_files")]
   dataRanges <- data.frame(datatype = character(),
                            start = numeric(),
                            end = numeric())
@@ -216,7 +216,7 @@ process_data <- function(city_name,
     #pull the date out of the files
     filenames <- get(i) #pull names
     filenames <- basename(filenames)
-    vector <- parse_number(filenames)
+    vector <- readr::parse_number(filenames)
     
     #find the data title
     dataLabel <- gsub(pattern = "_files", replacement = "", i)
@@ -238,7 +238,6 @@ process_data <- function(city_name,
   ###########################################
   ### RETRIEVE AND ALIGN SPATIAL PRODUCTS ###
   ###########################################
-  
   for(year in temporalRange){ #pull data
   
     #get the municipal border  
@@ -247,22 +246,14 @@ process_data <- function(city_name,
     
     #get lulc
     assign(paste0("lulc_",city_name,year),
-           vect(paste0("./MUST_downloaded_data/",city_name,"/lulc",year,".gpkg")))
-    
-  } # pulled data for municipal and lulc
-  
-  ###########################
-  ### DEFINE URBAN BORDER ###
-  ###########################
-  
-  for(year in temporalRange){
-    
+           terra::vect(paste0("./MUST_downloaded_data/",city_name,"/lulc",year,".gpkg")))
+
     #status
     message(paste("Estimating the urban border for", city_name, "for", year))
     
     #define urban border   
     assign(paste0("uborder_", city_name,year),
-           get_urban_border(city_name = city_name,
+           MUST::get_urban_border(city_name = city_name,
                             date = year,
                             bufferSize = 500,
                             thresholdUrban = 0.5,
@@ -295,8 +286,8 @@ process_data <- function(city_name,
   
   
   #check the tVI for every VI
-  for (q in VI) { # VI loop
-    for(year in temporalRange){
+  for (q in VI[2]){ # VI loop
+    for(year in temporalRange[3:5]){
     
     #status
     message(paste("Estimating the VI threshold (VIt) for",q,"in",city_name,"for",year))
@@ -308,22 +299,22 @@ process_data <- function(city_name,
     if(is.null(VI_interval)){
       if(VI_interval_guess=="monthly"|VI_interval_guess=="none"){
         #assign time to subset and then subset to summer months to limit seasonality pattern
-        month_idx <- as.numeric(format(time(rast), "%m")) #pull date out of the raster data and format it to numeric months
+        month_idx <- as.numeric(format(terra::time(rast), "%m")) #pull date out of the raster data and format it to numeric months
         growing_idx <- month_idx %in% VIt_range # User defined growing season
         rast <- rast[[growing_idx]] # Only include rasters within the growing season
         
         #tmeporally aggregate the data
-        rastAnn <- tapp(rast, index = "years", fun = "median", na.rm = T)
+        rastAnn <- terra::tapp(rast, index = "years", fun = "median", na.rm = T)
       }
     }else{
       if(VI_interval == "monthly"|VI_interval == "none"){ #redundant, but not sure how to solve rn....
         #assign time to subset and then subset to summer months to limit seasonality pattern
-        month_idx <- as.numeric(format(time(rast), "%m")) #pull date out of the raster data and format it to numeric months
+        month_idx <- as.numeric(format(terra::time(rast), "%m")) #pull date out of the raster data and format it to numeric months
         growing_idx <- month_idx %in% VIt_range # User defined growing season
         rast <- rast[[growing_idx]] # Only include rasters within the growing season
         
         #tmeporally aggregate the data
-        rastAnn <- tapp(rast, index = "years", fun = "median", na.rm = T)
+        rastAnn <- terra::tapp(rast, index = "years", fun = "median", na.rm = T)
       }
     }
       
@@ -331,19 +322,19 @@ process_data <- function(city_name,
     for(x in c("u","m")){ #border loop
       
       #mask the raster to the border of choice
-      maskedRast <- mask(rastAnn, project_to_local_utm(get(paste0(x,"border_",city_name,year)))) 
-      sclMasked <- as.numeric(global(maskedRast, "isNA")) #border + scl masked out cells
+      maskedRast <- terra::mask(rastAnn, MUST::project_to_local_utm(get(paste0(x,"border_",city_name,year)))) 
+      sclMasked <- as.numeric(terra::global(maskedRast, "isNA")) #border + scl masked out cells
       
       #lulc
-      lulc <- project_to_local_utm(get(paste0("lulc_",city_name,year))) #reproject
-      lulcRast <- rasterize(lulc, y = rastAnn, field = "lulc")
-      lulcRast <- mask(lulcRast, project_to_local_utm(get(paste0(x,"border_",city_name,year))))
+      lulc <- MUST::project_to_local_utm(get(paste0("lulc_",city_name,year))) #reproject
+      lulcRast <- terra::rasterize(lulc, y = rastAnn, field = "lulc")
+      lulcRast <- terra::mask(lulcRast, project_to_local_utm(get(paste0(x,"border_",city_name,year))))
       countGrey <- lulcRast$lulc %in% lulc_info$Value[lulc_info$infrastructure_class=="grey"] 
       countGreen <- lulcRast$lulc %in% lulc_info$Value[lulc_info$infrastructure_class=="green"]
       countBlue <- lulcRast$lulc %in% lulc_info$Value[lulc_info$infrastructure_class=="blue"]
       
       #scale VI and omit non vegetated cells according to threshold
-      VIdens <- VItoDensity(city_name = city_name, #city
+      VIdens <- MUST::VItoDensity(city_name = city_name, #city
                             date = year, #year
                             VI = maskedRast, #rast to put in
                             lulc = lulc, #LULC to decide things
@@ -354,32 +345,32 @@ process_data <- function(city_name,
       
       #indicator of cells
       VIdens[VIdens == 0] <- NA
-      cellNum <- ncell(VIdens)
+      cellNum <- terra::ncell(VIdens)
       
       
       #save outcome
-      dataVIt <- dataVIt %>% add_row(VI = q,
+      dataVIt <- dataVIt |> tibble::add_row(VI = q,
                                  year = year,
                                  border = x,
                                  city = city_name,
                                  sclMasked = sclMasked,
                                  cells = cellNum,
-                                 threshold_wy = as.numeric(metags(VIdens)[[1,2]]),
-                                 threshold_y = as.numeric(metags(VIdens)[[2,2]]),
-                                 threshold_95 = as.numeric(metags(VIdens)[[3,2]]),
-                                 countGrey = as.numeric(global(as.numeric(countGrey)==1, "sum", na.rm = T)),
-                                 countGreen = as.numeric(global(as.numeric(countGreen)==1, "sum", na.rm = T)),
-                                 countBlue = as.numeric(global(as.numeric(countBlue)==1, "sum", na.rm = T)),
-                                 medianVIgrey = as.numeric(metags(VIdens)[[4,2]]),
-                                 medianVIgreen = as.numeric(metags(VIdens)[[5,2]]),
-                                 medianVIblue = as.numeric(metags(VIdens)[[6,2]])
+                                 threshold_wy = as.numeric(terra::metags(VIdens)[[1,2]]),
+                                 threshold_y = as.numeric(terra::metags(VIdens)[[2,2]]),
+                                 threshold_95 = as.numeric(terra::metags(VIdens)[[3,2]]),
+                                 countGrey = as.numeric(terra::global(as.numeric(countGrey)==1, "sum", na.rm = T)),
+                                 countGreen = as.numeric(terra::global(as.numeric(countGreen)==1, "sum", na.rm = T)),
+                                 countBlue = as.numeric(terra::global(as.numeric(countBlue)==1, "sum", na.rm = T)),
+                                 medianVIgrey = as.numeric(terra::metags(VIdens)[[4,2]]),
+                                 medianVIgreen = as.numeric(terra::metags(VIdens)[[5,2]]),
+                                 medianVIblue = as.numeric(terra::metags(VIdens)[[6,2]])
       )
 
       } #Border loop
     } # Year loop
   } # VI loop
   dir.create(paste0("./MUST_downloaded_data/",city_name,"/result/thresholds"), showWarnings = F, recursive = T)
-  write.csv2(dataVIt, file = paste0("./MUST_downloaded_data/",city_name,"/result/thresholds/data_VIt.csv"))
+  data.table::fwrite(dataVIt, file = paste0("./MUST_downloaded_data/",city_name,"/result/thresholds/data_VIt.csv"))
 
 
   
@@ -388,35 +379,62 @@ process_data <- function(city_name,
   ##############################################
   
   for(q in VI){ #create scenarios for the VIs
+    for(border in c("u","m"))
     
     #Pull full VI stack for imputation and scenario creation
-    VIstack <- rast(get(paste0(q,"_files")))
+    VIstack <- terra::rast(get(paste0(q,"_files")))
     # fill in missing timesteps
-    VIstackTime <- fill_missing_layers(VIstack)
+    VIstackTime <- MUST::fill_missing_layers(VIstack)
     
-    ### REPLACE BY DYNAMIC MASKING ###
-    #select border to mask by. 
-    if(border == "u"){
-        maskBorder <- get("uborder")
+    for(year in temporalRange) { #dynamically mask every layer of the stack by annual masks
+      
+      #grab the border
+      if(border == "m"){
+        assign("maskBorder",
+               get(paste0("mborder_",city_name,year)))
+        maskBorder <- MUST::project_to_local_utm(maskBorder)
       }else{
-        maskBorder <- project_to_local_utm(get("mborder"))
-    }
-    ### REPLACE BY DYNAMIC MASKING ###
+        assign("maskBorder",
+               MUST::get_urban_border(city_name = city_name, date = year, bufferSize = 500))
+      }
+      
+      #grab the LULC to mask out water cells
+      assign("lulc",
+             get(paste0("lulc_",city_name,year)))
+      lulc <- MUST::project_to_local_utm(lulc)
+      blueLULC <-  subset(lulc, lulc$lulc %in% c(lulc_info$Value[lulc_info$infrastructure_class== "blue"]))
+      
+      
+      #idx of the layers relevant --> this only links to annual. Need to test with monthly or none aggregated data.
+      ## However, the lulc and borders are annually, so I suppose this makes sense
+      idx <- which(lubridate::year(terra::time(VIstackTime))==year)
+      for(layer in idx){ #mask per layer and have the calcs write to disk instead of memory
+        VIstackTime[[layer]] <- terra::mask(VIstackTime[[layer]], maskBorder, #dynamic border maks
+                                 filename = tempfile(fileext = ".tif"),
+                                 overwrite = T)
+        VIstackTime[[layer]] <- terra::mask(VIstackTime[[layer]], blueLULC, inverse = T, #dynamic water mask
+                                 filename = tempfile(fileext = ".tif"),
+                                 overwrite = T)
+      }
+      
+      if(year == utils::tail(unique(lubridate::year(terra::time(VIstackTime))), n = 1)){print("Finished masking dyanmically")}
+    } #end loop annual dyanmic masking
+    
+    
+    # Here, VIstackTime reflects the VI stacks that are dynamically masked and go into the benchmarking and scenario creation
     
     # Pull the estimated VI threshold
     if(is.numeric(VIt_min)){thresholdVI <- VIt_min}else{ #take user constant or if it was dynamic, take w-youden
-    thresholdVI <- median(dataVIt$threshold_wy[dataVIt$city == city &
-                                                 dataVIt$VI == VI &
+    thresholdVI <- stats::median(dataVIt$threshold_wy[dataVIt$city == city_name &
+                                                 dataVIt$VI == q &
                                                  dataVIt$border == border], na.rm = T)}
     
     
     # Clamp stack
     VIstackCl <- terra::clamp(VIstackTime, lower = thresholdVI, upper = 1, values = F)
-    VIstackCl <- terra::mask(VIstackCl, maskBorder) #omit all cells outside or urban or municipal border.
-    VIstackCl <- terra::mask(VIstackCl, blueLULC, inverse = T)
     
     #benchmark interpolation methods for the stack and put them in a list
-    resultBenchmark <- benchmark_approximation(
+    resultBenchmark <- MUST::benchmark_approximation(
       VIstackCl,
       methods = c("linear",
                   "spline",
@@ -425,19 +443,18 @@ process_data <- function(city_name,
       prop_NA = 0.01,
       verbose = T,
       ncore = 8,
-      HANTS_freq = round(nlyr(VIstackCl)/12, #data is monthly, so 12 for 1 freq (annual hz)
-                         digits = 0),
+      HANTS_freq = length(unique(lubridate::year(terra::time(VIstackTime)))), #data is monthly, so 12 for 1 freq (annual hz)
       max_gap = 4,
       max_NA_prop = 0.5,
       maxVal = 1, minVal = 0
     )
     
     
-    dir.create(paste0("D:/MUST_HANDBOOK_EXAMPLE/approximationMetrics/"),
+    dir.create(paste0("./MUST_downloaded_data/",city_name,"/result/approximationMetrics/"),
                showWarnings = F, recursive = T)
-    fwrite(resultBenchmark$metrics,
-           file = paste0("D:/MUST_HANDBOOK_EXAMPLE/approximationMetrics/",city,"_",VI,"_",border,".csv"))
-    print(paste0("Calculated best approximation method for ",border, city, " and indicator ", VI))
+    data.table::fwrite(resultBenchmark$metrics,
+           file = paste0("./MUST_downloaded_data/",city_name,"/result/approximationMetrics/",city_name,"_",q,"_",border,".csv"))
+    print(paste0("Calculated best approximation method for ",border," ", city_name, " and indicator ", q))
     
     #scenario parameters
     benchmarks <- resultBenchmark$metrics
@@ -445,53 +462,45 @@ process_data <- function(city_name,
     RMSE <- benchmarks$RMSE[benchmarks$Method == approxMethod]
     MAE <- benchmarks$MAE[benchmarks$Method == approxMethod]
     Bias <- benchmarks$Bias[benchmarks$Method == approxMethod]
-    print(paste0(approxMethod, " best approximation method with an RMSE:", RMSE, " and MAE:", MAE, " and R2:", benchmarks$R2[benchmarks$Method == approxMethod]))
+    print(paste0(approxMethod, " chosen as best approximation method with an RMSE:", RMSE, " and MAE:", MAE, " and R2:", benchmarks$R2[benchmarks$Method == approxMethod]))
     
     #pull best approximated stack
     VIstackApprox <- resultBenchmark[[paste0("stack_pred_", approxMethod)]]
-    print("retrieved best approximated historical stack")
     resultBenchmark <- NULL #drop spatRasters from memory! IMPORTANT
     
     #create dir and write base scenario
-    dir.create(paste0("D:/MUST_HANDBOOK_EXAMPLE/MUST_downloaded_data/",
-                      city,"/result/scenarios/"),
+    dir.create(paste0("./MUST_downloaded_data/",
+                      city_name,"/result/scenarios/"),
                showWarnings = F, recursive = T) #to make the directory
-    terra::clamp(VIstackApprox, lower = -1, upper = 1, values = T,
-                 filename = paste0("D:/MUST_HANDBOOK_EXAMPLE/MUST_downloaded_data/",
-                                   city,"/result/scenarios/",VI,"_",border,"_base.tiff"), overwrite = T)
+    terra::clamp(VIstackApprox, lower = -1, upper = 1, values = T, #THIS IS BASE VI SCENARIO (NOT FCV)
+                 filename = paste0("./MUST_downloaded_data/",
+                                   city_name,"/result/scenarios/",q,"_",border,"_base.tiff"), overwrite = T)
     print("Saved best stack as base scenario")
     
     
-    ### Alternative scenarios ###
-    # Which cells were approximated (i.e. changed)?
-    is_interpolated <- is.na(VIstackCl) & !is.na(VIstackApprox)
-    for(scenario in c(-2, -1, 1, 2)){ #range -2 - 2x RMSE
-      
-      #status
-      print(paste0("Creating scenario ", scenario))
-      
-      #adjustment
-      altScenario <- ifel(is_interpolated, #check if the cell was approximated
-                          VIstackApprox + (RMSE * scenario) + Bias, #scen
-                          VIstackApprox) #or keep same
-      
-      
-      terra::clamp(altScenario, lower = -1, upper = 1, values = T,
-                   filename = paste0("D:/MUST_HANDBOOK_EXAMPLE/MUST_downloaded_data/",
-                                     city,"/result/scenarios/",VI,"_",border,"_",scenario,".tiff"),
-                   overwrite = T)
-      rm(altScenario) #cleanup
-      
-    } #end scenarios loop
+        ### Alternative scenarios ###
+        # Which cells were approximated (i.e. changed)?
+        is_interpolated <- is.na(VIstackCl) & !is.na(VIstackApprox)
+        for(scenario in c(-2, -1, 1, 2)){ #range -2 - 2x RMSE
+          
+          #status
+          print(paste0("Creating scenario ", scenario))
+          
+          #adjustment
+          altScenario <- terra::ifel(is_interpolated, #check if the cell was approximated
+                              VIstackApprox + (RMSE * scenario) + Bias, #scen
+                              VIstackApprox) #or keep same
+          
+          
+          terra::clamp(altScenario, lower = -1, upper = 1, values = T,
+                       filename = paste0("./MUST_downloaded_data/",
+                                         city_name,"/result/scenarios/",q,"_",border,"_",scenario,".tiff"),
+                       overwrite = T)
+          rm(altScenario) #cleanup
+          
+        } #end scenarios loop
   }
   
   
-  ############################################
-  ### CALCULATE SPATIO-TEMPORAL STATISTICS ###
-  ############################################
   
-  
-  #####################################
-  ### PLOT AND SUMMARISE STATISTICS ###
-  #####################################
 }

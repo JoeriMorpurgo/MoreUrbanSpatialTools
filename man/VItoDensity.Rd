@@ -33,7 +33,7 @@ VItoDensity(
 
 \item{lulc}{spatVect from Terra. A spat vector that contains lulc classes that are present in lulcInfo from the MUST package.}
 
-\item{VI_min}{numeric OR "Dynamic". Numeric (default = 0.25) denotes the minimal threshold value of NDVI to be considered 0\% vegetation coverage. The dynamic option requires LULC to be downloaded and draws random point in LULC that is and isn't green to determine a threshold. This also produces a plot and some extra information. NOTE: The dynamic approach only takes 1 raster layer. Providing a numeric value allows for the processing of a full Stack.}
+\item{VI_min}{Numeric OR "Dynamic". Numeric (default = 0.25) sets the minimal threshold value of a VI to be considered 0\% vegetation coverage. The dynamic option requires LULC to be downloaded and draws random point in LULC that is and isn't green LULC to determine a threshold. This also produces a plot and some extra information. NOTE: The dynamic approach only takes 1 raster layer. Providing a numeric value allows for the processing of a full Stack.}
 
 \item{VI_max}{Proportion (defaults to NULL). Defaults to the max present in the VI raster present. Alternatively, user may provide a value between 0-1. This should always be higher than VI_min.}
 

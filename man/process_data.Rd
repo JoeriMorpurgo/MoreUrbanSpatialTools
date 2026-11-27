@@ -4,13 +4,34 @@
 \alias{process_data}
 \title{Processes data that was retrieved via collect_data()}
 \usage{
-process_data(city_name)
+process_data(
+  city_name,
+  VI = c("NDVI", "EVI", "MSAVI"),
+  VI_interval = NULL,
+  VI_method = NULL,
+  VIt_min = "w_youden",
+  VIt_range = NULL
+)
 }
 \arguments{
 \item{city_name}{character value. name of a city and country to retrieve data for. Format should be "city, country".}
+
+\item{VI}{Character value(s). Name of the VI(s) to use during processing. Can be one or more of the following c("NDVI","EVI","MSAVI"), defaults to all three.}
+
+\item{VI_interval}{Character value. Either c("monthly","aggregated","none") to indicate the temporal aggregation of the VI data. Defaults to finding the most abundant monthly or aggregated files.}
+
+\item{VI_method}{Character value. Name of the method used for temporally aggregating. Defaults to most abundant files present. Accepted values are c("max","median","90th","none").}
+
+\item{VIt_min}{Character or numeric value. Numeric indicates a constant for the VI in the order of the VI parameter. Alternatively, provide a character value such as "dynamic" for estimation of VIt.}
+
+\item{VIt_range}{Numeric vector. Vector numbers relating the growing season which are used to estimate the Vegetation Index Thresholds (VIt). For example c(5,6,7,8,9) or 5:9. Not applicable for annually aggregated data.}
+}
+\value{
+placeholder
 }
 \description{
-This function is a wrapper around several functions in the MUST package. The intended use is to simplify the data processing part.
+This function is a wrapper around several functions in the MUST package.
+The intended use is to provide standard the data processing part.
 }
 \details{
 NOTE:

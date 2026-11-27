@@ -1,6 +1,6 @@
 Package: MUST
 Title: More Urban Spatial Tools
-Version: 0.2.0
+Version: 0.3.0
 Authors@R: 
     c(person("Joeri", "Morpurgo", role = c("aut", "cre", "cph"),
                      email = "j.morpurgo@cml.leidenuniv.nl",
@@ -15,6 +15,7 @@ Depends:
 LazyData: true
 Imports: 
     arrow,
+    data.table,
     dplyr,
     graphics,
     grDevices,
@@ -25,11 +26,14 @@ Imports:
     openeo,
     osmdata,
     raster,
+    readr,
     sf,
     stats,
     stringr,
     terra,
+    tibble,
     tidygeocoder,
+    tidyr,
     xfun
 Suggests: 
     knitr,
